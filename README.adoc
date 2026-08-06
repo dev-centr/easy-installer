@@ -1,0 +1,67 @@
+ifndef::env-github[:icons: font]
+:toc: preamble
+:toclevels: 2
+
+= easy-installer
+
+Cross-platform installer project host with a plugin ABI, **Install in-place (add to PATH)**, and OS file-manager hooks.
+
+link:CHANGELOG.adoc[Changelog] ·
+link:https://github.com/dev-centr/easy-installer/issues[Issues]
+
+== Install
+
+Download a release asset for your OS, put `easy-installer` on your PATH, then:
+
+[source,bash]
+----
+easy-installer shell install
+----
+
+== Quick start
+
+[source,bash]
+----
+# Add this folder to user PATH (no copy)
+easy-installer inplace-path add .
+
+# Scaffold an installer project
+easy-installer new-project . --plugin=portable-zip
+
+# Build with the selected plugin
+easy-installer build .
+----
+
+== Plugins
+
+|===
+| Id | Role
+
+| `portable-zip`
+| Always-on zip payload
+
+| `nsis`
+| Emit `.nsi`; build with `makensis` if present
+
+| `inno`
+| Emit `.iss`; build with Inno Setup Compiler if present
+
+| `msi` / `msix`
+| Invoke https://github.com/dev-centr/msi-generator[msi-generator]
+
+| `appimage`
+| Linux AppImage stub / tooling hints
+|===
+
+List plugins and GUI tooling:
+
+[source,bash]
+----
+easy-installer plugins list
+easy-installer plugins info inno
+easy-installer plugins install-gui inno
+----
+
+== Contact
+
+DevCentr.org — support@devcentr.org

@@ -1,0 +1,9 @@
+= Changelog
+
+== 2026-08-06 — v0.1.0 initial release
+
+* Host CLI: `inplace-path`, `new-project`, `build`, `plugins`, `shell`, `--version`, `debug-dump`
+* Built-in plugins: portable-zip, nsis, inno, msi, msix, appimage
+* msi-generator bridge for MSI/MSIX plugins
+* Win11 sparse package + classic fallback; macOS Quick Action; Linux file-manager adapters
+* Installer project format: `installer.kdl`

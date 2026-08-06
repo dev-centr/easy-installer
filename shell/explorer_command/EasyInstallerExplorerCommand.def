@@ -1,0 +1,4 @@
+LIBRARY EasyInstallerExplorerCommand
+EXPORTS
+    DllCanUnloadNow PRIVATE
+    DllGetClassObject PRIVATE

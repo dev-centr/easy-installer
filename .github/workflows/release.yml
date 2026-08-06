@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: easy-installer-linux-amd64
+          - os: windows-latest
+            asset_name: easy-installer-windows-amd64.exe
+          - os: macos-latest
+            asset_name: easy-installer-macos-amd64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ldc-latest
+
+      - name: Build
+        run: dub build --build=release
+
+      - name: Rename artifact
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            mv easy-installer.exe "${{ matrix.asset_name }}"
+          else
+            mv easy-installer "${{ matrix.asset_name }}"
+            chmod +x "${{ matrix.asset_name }}"
+          fi
+
+      - name: Upload binaries to release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ matrix.asset_name }}
+          generate_release_notes: true

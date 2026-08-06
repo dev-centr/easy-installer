@@ -1,0 +1,19 @@
+= Plugin ABI
+
+Third-party plugins can extend easy-installer.
+
+== Built-in (compiled in)
+
+See `plugins/*.d` — portable-zip, nsis, inno, msi, msix, appimage.
+
+== Subprocess protocol (v0.1 sketch)
+
+Place `easy-installer-plugin-<id>` on PATH. Future host revisions will call:
+
+* `--describe` → KDL/JSON metadata (id, displayName, targets, guiUrl)
+* `--build --project=<dir> --out=<dir>` → build artifact
+* `--emit --project=<dir> --out=<dir>` → intermediate sources only
+
+== msi-generator
+
+The `msi` and `msix` plugins invoke https://github.com/dev-centr/msi-generator[msi-generator] as the packaging engine (`MSI_GENERATOR` env or PATH).
