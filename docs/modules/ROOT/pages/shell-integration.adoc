@@ -1,0 +1,26 @@
+= Shell integration
+:description: File-manager menus on Windows, macOS, and Linux.
+:navtitle: Shell integration
+
+Install or remove:
+
+[source,bash]
+----
+easy-installer shell install
+easy-installer shell uninstall
+----
+
+== Windows
+
+* **Win11 preferred:** sparse package + `IExplorerCommand` DLL (`shell/explorer_command`; build with MSVC).
+* **Fallback:** classic HKCU cascading menu + `.easyinstaller` type for older Windows or when modern registration fails.
+
+== macOS
+
+Writes Quick Action instructions under `~/Library/Services`.
+
+== Linux
+
+DES-EMA actions under `~/.local/share/file-manager/actions/` plus a Nemo action.
+
+See also `shell/README.adoc` in the repository.

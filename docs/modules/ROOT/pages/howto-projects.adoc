@@ -1,0 +1,33 @@
+= How-to: installer projects
+:description: Scaffold installer.kdl and build with a plugin.
+:navtitle: Installer projects
+
+== Create
+
+[source,bash]
+----
+easy-installer new-project . --plugin=portable-zip
+----
+
+This writes `installer.kdl` and a short `INSTALLER.adoc`.
+
+== Edit
+
+Set `name`, `version`, `id`, `publisher`, `plugin`, optional `exe`, `add-to-path`, and `files`.
+
+== Build
+
+[source,bash]
+----
+easy-installer build .
+# or override:
+easy-installer build . --plugin=nsis
+----
+
+Artifacts land under `dist/`.
+
+== From DevCentr
+
+* New menu / Content Create → Packaging → **Installer Project**
+* Toolbar → **New Installer**
+* CLI: `dev-center --mode=new-installer --path=…`

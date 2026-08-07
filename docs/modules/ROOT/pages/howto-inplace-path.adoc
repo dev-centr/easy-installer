@@ -1,0 +1,34 @@
+= How-to: Install in-place (add to PATH)
+:description: Append a folder to the user PATH without copying files.
+:navtitle: In-place PATH
+
+== Goal
+
+Make executables in a folder runnable by name in new terminals, without packaging or copying into Program Files.
+
+== Steps
+
+. Install Easy Installer and ensure it is on PATH.
+. From a shell:
++
+[source,bash]
+----
+easy-installer inplace-path add /path/to/folder
+----
+. Open a **new** terminal (Windows broadcasts env changes; shells already open keep the old PATH).
+. Undo later with:
++
+[source,bash]
+----
+easy-installer inplace-path remove /path/to/folder
+easy-installer inplace-path list
+----
+
+== Platforms
+
+* **Windows** — user `Environment\Path` via PowerShell.
+* **macOS / Linux** — ledger plus a sourced snippet under the config root (`path-snippet.sh`).
+
+== File manager
+
+Right-click a folder → **Easy Installer** → **Install in-place (add to PATH)** after `easy-installer shell install`. On Windows 11, the modern sparse package needs the Explorer DLL built with MSVC; otherwise classic menus are used.

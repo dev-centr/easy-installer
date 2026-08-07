@@ -7,7 +7,8 @@ ifndef::env-github[:icons: font]
 Cross-platform installer project host with a plugin ABI, **Install in-place (add to PATH)**, and OS file-manager hooks.
 
 link:CHANGELOG.adoc[Changelog] ·
-link:https://github.com/dev-centr/easy-installer/issues[Issues]
+link:https://github.com/dev-centr/easy-installer/issues[Issues] ·
+link:https://docs.devcentr.org/easy-installer/latest/index.html[Docs]
 
 == Install
 

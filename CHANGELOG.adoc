@@ -7,3 +7,4 @@
 * msi-generator bridge for MSI/MSIX plugins
 * Win11 sparse package + classic fallback; macOS Quick Action; Linux file-manager adapters
 * Installer project format: `installer.kdl`
+* Antora docs component wired into docs.devcentr.org hub

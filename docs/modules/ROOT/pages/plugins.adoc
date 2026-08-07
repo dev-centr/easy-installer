@@ -1,0 +1,36 @@
+= Plugins
+:description: Built-in installer backends and GUI discovery.
+:navtitle: Plugins
+
+[cols="1,2,2"]
+|===
+| Id | Role | Tool / GUI
+
+| `portable-zip`
+| Always-on zip payload
+| Built-in
+
+| `nsis`
+| Emit `.nsi`; build with `makensis`
+| link:https://nsis.sourceforge.io/Download[NSIS]
+
+| `inno`
+| Emit `.iss`; build with ISCC
+| link:https://jrsoftware.org/isdl.php[Inno Setup]
+
+| `msi` / `msix`
+| Invoke xref:msi-generator:ROOT:index.adoc[msi-generator]
+| Set `MSI_GENERATOR` or put `msi-generator` on PATH
+
+| `appimage`
+| Linux AppDir skeleton / `appimagetool`
+| link:https://github.com/AppImage/appimagetool[appimagetool]
+|===
+
+Discover and open installer GUIs:
+
+[source,bash]
+----
+easy-installer plugins info inno
+easy-installer plugins install-gui inno
+----

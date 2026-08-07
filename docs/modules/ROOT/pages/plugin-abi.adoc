@@ -1,0 +1,17 @@
+= Plugin ABI
+:description: How third parties extend Easy Installer.
+:navtitle: Plugin ABI
+
+Built-in plugins live under `plugins/*.d` and register at load time.
+
+== Subprocess protocol (sketch)
+
+Place `easy-installer-plugin-<id>` on PATH. Future host revisions will call:
+
+* `--describe` → metadata (id, displayName, targets, guiUrl)
+* `--build --project=<dir> --out=<dir>`
+* `--emit --project=<dir> --out=<dir>`
+
+== msi-generator dual role
+
+The `msi` and `msix` plugins treat link:https://github.com/dev-centr/msi-generator[msi-generator] as both **engine** and **extension**: Easy Installer owns the project UX; msi-generator owns CFB/CAB/table and MSIX ZIP emission.

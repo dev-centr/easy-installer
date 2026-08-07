@@ -1,0 +1,6 @@
+name: easy-installer
+title: Easy Installer
+version: master
+start_page: ROOT:index.adoc
+nav:
+  - modules/ROOT/nav.adoc
