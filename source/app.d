@@ -74,14 +74,14 @@ int usage()
     writeln(aboutLine());
     writeln(`
 Usage:
-  easy-installer inplace-path add|remove|list [dir]
-  easy-installer new-project <dir> [--plugin=<id>] [--intent=package|ci-pipeline] [--runner=<id>]
-  easy-installer emit-ci [dir] [--runner=<id>] [--plugin=<id>]
-  easy-installer build <dir> [--plugin=<id>]
-  easy-installer plugins list|info <id>|install-gui <id>
-  easy-installer shell install|uninstall
-  easy-installer --version
-  easy-installer debug-dump [file]
+  ibex inplace-path add|remove|list [dir]
+  ibex new-project <dir> [--plugin=<id>] [--intent=package|ci-pipeline] [--runner=<id>]
+  ibex emit-ci [dir] [--runner=<id>] [--plugin=<id>]
+  ibex build <dir> [--plugin=<id>]
+  ibex plugins list|info <id>|install-gui <id>
+  ibex shell install|uninstall
+  ibex --version
+  ibex debug-dump [file]
 
 CI runners: github-actions, gitlab-ci, azure-pipelines, jenkins, circleci, bitbucket-pipelines
 emit-ci writes workflow files + CI-INSTALLER.adoc only (no package build).

@@ -8,20 +8,20 @@ Make executables in a folder runnable by name in new terminals, without packagin
 
 == Steps
 
-. Install Easy Installer and ensure it is on PATH.
+. Install Ibex and ensure `ibex` is on PATH.
 . From a shell:
 +
 [source,bash]
 ----
-easy-installer inplace-path add /path/to/folder
+ibex inplace-path add /path/to/folder
 ----
 . Open a **new** terminal (Windows broadcasts env changes; shells already open keep the old PATH).
 . Undo later with:
 +
 [source,bash]
 ----
-easy-installer inplace-path remove /path/to/folder
-easy-installer inplace-path list
+ibex inplace-path remove /path/to/folder
+ibex inplace-path list
 ----
 
 == Platforms
@@ -31,4 +31,4 @@ easy-installer inplace-path list
 
 == File manager
 
-Right-click a folder → **Easy Installer** → **Install in-place (add to PATH)** after `easy-installer shell install`. On Windows 11, the modern sparse package needs the Explorer DLL built with MSVC; otherwise classic menus are used.
+Right-click a folder → **Ibex** → **Install in-place (add to PATH)** after `ibex shell install`. On Windows 11, the modern sparse package needs the Explorer DLL built with MSVC; otherwise classic menus are used.

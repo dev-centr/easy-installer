@@ -11,15 +11,24 @@ string configRoot()
     {
         auto local = environment.get("LOCALAPPDATA", "");
         if (local.length)
-            return buildPath(local, "easy-installer");
-        return buildPath(expandTilde("~"), "AppData", "Local", "easy-installer");
+        {
+            auto ibex = buildPath(local, "ibex");
+            auto legacy = buildPath(local, "easy-installer");
+            if (exists(ibex) || !exists(legacy))
+                return ibex;
+            return legacy;
+        }
+        return buildPath(expandTilde("~"), "AppData", "Local", "ibex");
     }
     else
     {
         auto xdg = environment.get("XDG_CONFIG_HOME", "");
-        if (xdg.length)
-            return buildPath(xdg, "easy-installer");
-        return buildPath(expandTilde("~"), ".config", "easy-installer");
+        auto base = xdg.length ? xdg : buildPath(expandTilde("~"), ".config");
+        auto ibex = buildPath(base, "ibex");
+        auto legacy = buildPath(base, "easy-installer");
+        if (exists(ibex) || !exists(legacy))
+            return ibex;
+        return legacy;
     }
 }
 

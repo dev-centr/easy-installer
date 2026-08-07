@@ -6,14 +6,14 @@ Install or remove:
 
 [source,bash]
 ----
-easy-installer shell install
-easy-installer shell uninstall
+ibex shell install
+ibex shell uninstall
 ----
 
 == Windows
 
-* **Win11 preferred:** sparse package + `IExplorerCommand` DLL (`shell/explorer_command`; build with MSVC) — Install in-place, New Installer Project, New Installer CI pipeline.
-* **Fallback:** classic HKCU cascading menu + `.easyinstaller` type for older Windows or when modern registration fails.
+* **Win11 preferred:** sparse package + `IExplorerCommand` DLL (`shell/explorer_command`; build with MSVC) — Install in-place, New Installer Project, New Installer CI pipeline under **Ibex**.
+* **Fallback:** classic HKCU cascading menu + `.ibex` type for older Windows or when modern registration fails.
 
 == macOS
 

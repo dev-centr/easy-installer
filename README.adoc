@@ -2,35 +2,77 @@ ifndef::env-github[:icons: font]
 :toc: preamble
 :toclevels: 2
 
-= easy-installer
+= Ibex
+:description: Install Builder EXtension — author installer packages and put tools on PATH.
 
-Cross-platform installer project host with a plugin ABI, **Install in-place (add to PATH)**, and OS file-manager hooks.
+image::https://raw.githubusercontent.com/dev-centr/easy-installer/main/assets/ibex.svg[Ibex logo,100]
+
+**Ibex** (*Install Builder EXtension*) extends file managers, DevCentr, and CI with installer-authoring and **Install in-place (add to PATH)**. It is **not** a software catalog installer (it does not replace winget/apt).
 
 link:CHANGELOG.adoc[Changelog] ·
 link:https://github.com/dev-centr/easy-installer/issues[Issues] ·
-link:https://docs.devcentr.org/easy-installer/latest/index.html[Docs]
+link:https://docs.devcentr.org/ibex/latest/index.html[Docs]
 
 == Install
 
-Download a release asset for your OS, put `easy-installer` on your PATH, then:
+=== Windows (winget)
+
+[source,powershell]
+----
+winget install DevCentr.Ibex
+----
+
+=== macOS / Linux (Homebrew)
 
 [source,bash]
 ----
-easy-installer shell install
+brew tap dev-centr/tap
+brew install ibex
 ----
+
+=== Windows (Scoop)
+
+[source,powershell]
+----
+scoop bucket add dev-centr https://github.com/dev-centr/homebrew-tap
+scoop install ibex
+----
+
+Prefer the release asset if registries are still catching up:
+
+[source,bash]
+----
+# Download ibex-* from https://github.com/dev-centr/easy-installer/releases
+# Put ibex on PATH, then:
+ibex shell install
+----
+
+Transitional: `easy-installer-*` assets are still attached to v0.2.x releases.
+
+=== Contributors (DUB build only)
+
+[source,bash]
+----
+dub build --build=release
+----
+
+DUB is not an end-user install channel.
 
 == Quick start
 
 [source,bash]
 ----
 # Add this folder to user PATH (no copy)
-easy-installer inplace-path add .
+ibex inplace-path add .
 
 # Scaffold an installer project
-easy-installer new-project . --plugin=portable-zip
+ibex new-project . --plugin=portable-zip
 
 # Build with the selected plugin
-easy-installer build .
+ibex build .
+
+# Or emit CI workflows only
+ibex emit-ci . --runner=github-actions
 ----
 
 == Plugins
@@ -38,31 +80,13 @@ easy-installer build .
 |===
 | Id | Role
 
-| `portable-zip`
-| Always-on zip payload
-
-| `nsis`
-| Emit `.nsi`; build with `makensis` if present
-
-| `inno`
-| Emit `.iss`; build with Inno Setup Compiler if present
-
-| `msi` / `msix`
-| Invoke https://github.com/dev-centr/msi-generator[msi-generator]
-
-| `appimage`
-| Linux AppImage stub / tooling hints
+| portable-zip | Always-available zip package
+| nsis / inno | Script + compiler when installed
+| msi / msix | Via msi-generator
+| appimage | Linux AppImage path
 |===
 
-List plugins and GUI tooling:
+== Related
 
-[source,bash]
-----
-easy-installer plugins list
-easy-installer plugins info inno
-easy-installer plugins install-gui inno
-----
-
-== Contact
-
-DevCentr.org — support@devcentr.org
+* link:docs/modules/ROOT/pages/howto-emit-ci.adoc[Emit CI pipelines]
+* https://github.com/dev-centr/msi-generator[msi-generator]

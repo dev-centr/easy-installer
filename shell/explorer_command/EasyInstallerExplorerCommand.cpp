@@ -1,5 +1,5 @@
 // Thin IExplorerCommand host for Windows 11 File Explorer.
-// Launches sibling easy-installer.exe with inplace-path / new-project.
+// Launches sibling ibex.exe with inplace-path / new-project / CI scaffold.
 // CLSID must match shell/sparse-package/AppxManifest.xml.
 
 #ifndef UNICODE
@@ -43,7 +43,7 @@ static std::wstring ModuleDirectory()
 static std::wstring FindExe()
 {
     const auto dir = ModuleDirectory();
-    const wchar_t* candidates[] = { L"easy-installer.exe", L"easy-installer" };
+    const wchar_t* candidates[] = { L"ibex.exe", L"ibex", L"easy-installer.exe", L"easy-installer" };
     for (auto name : candidates)
     {
         std::wstring full = dir + L"\\" + name;
@@ -244,7 +244,7 @@ public:
         if (c == 0) delete this;
         return c;
     }
-    IFACEMETHODIMP GetTitle(IShellItemArray*, PWSTR* name) override { return SHStrDupW(L"Easy Installer", name); }
+    IFACEMETHODIMP GetTitle(IShellItemArray*, PWSTR* name) override { return SHStrDupW(L"Ibex", name); }
     IFACEMETHODIMP GetIcon(IShellItemArray*, PWSTR* icon) override
     {
         auto exe = FindExe();

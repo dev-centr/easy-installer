@@ -6,7 +6,7 @@
 
 [source,bash]
 ----
-easy-installer new-project . --plugin=portable-zip
+ibex new-project . --plugin=portable-zip
 ----
 
 This writes `installer.kdl` and a short `INSTALLER.adoc`.
@@ -19,9 +19,9 @@ Set `name`, `version`, `id`, `publisher`, `plugin`, optional `exe`, `add-to-path
 
 [source,bash]
 ----
-easy-installer build .
+ibex build .
 # or override:
-easy-installer build . --plugin=nsis
+ibex build . --plugin=nsis
 ----
 
 Artifacts land under `dist/`.
@@ -32,9 +32,9 @@ To emit workflows only (GitHub Actions, GitLab CI, Azure Pipelines, Jenkins, Cir
 
 [source,bash]
 ----
-easy-installer new-project . --intent=ci-pipeline --runner=github-actions
+ibex new-project . --intent=ci-pipeline --runner=github-actions
 # or later:
-easy-installer emit-ci .
+ibex emit-ci .
 ----
 
 See xref:howto-emit-ci.adoc[How-to: emit CI pipelines].

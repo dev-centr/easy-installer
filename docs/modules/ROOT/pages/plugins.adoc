@@ -31,6 +31,6 @@ Discover and open installer GUIs:
 
 [source,bash]
 ----
-easy-installer plugins info inno
-easy-installer plugins install-gui inno
+ibex plugins info inno
+ibex plugins install-gui inno
 ----

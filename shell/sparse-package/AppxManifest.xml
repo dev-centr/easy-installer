@@ -10,12 +10,12 @@
   IgnorableNamespaces="uap uap10 rescap desktop4 desktop5 com">
 
   <Identity
-    Name="DevCentr.EasyInstaller.Shell"
+    Name="DevCentr.Ibex.Shell"
     Publisher="CN=DevCentr Local"
-    Version="0.1.0.0" />
+    Version="0.2.0.0" />
 
   <Properties>
-    <DisplayName>Easy Installer Shell</DisplayName>
+    <DisplayName>Ibex Shell</DisplayName>
     <PublisherDisplayName>DevCentr</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
@@ -32,20 +32,20 @@
   <Applications>
     <Application
       Id="App"
-      Executable="easy-installer.exe"
+      Executable="ibex.exe"
       EntryPoint="Windows.FullTrustApplication"
       uap10:TrustLevel="mediumIL"
       uap10:RuntimeBehavior="win32App">
       <uap:VisualElements
-        DisplayName="Easy Installer"
-        Description="Installer projects and in-place PATH"
+        DisplayName="Ibex"
+        Description="Install Builder Extension — author packages and put tools on PATH"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\StoreLogo.png"
         Square44x44Logo="Assets\StoreLogo.png" />
       <Extensions>
         <com:Extension Category="windows.comServer">
           <com:ComServer>
-            <com:SurrogateServer DisplayName="Easy Installer Explorer Command">
+            <com:SurrogateServer DisplayName="Ibex Explorer Command">
               <com:Class
                 Id="E111A571-1111-4E00-9A55-001122334466"
                 Path="EasyInstallerExplorerCommand.dll"
@@ -56,10 +56,10 @@
         <desktop4:Extension Category="windows.fileExplorerContextMenus">
           <desktop4:FileExplorerContextMenus>
             <desktop5:ItemType Type="Directory">
-              <desktop5:Verb Id="EasyInstallerRoot" Clsid="E111A571-1111-4E00-9A55-001122334466" />
+              <desktop5:Verb Id="IbexRoot" Clsid="E111A571-1111-4E00-9A55-001122334466" />
             </desktop5:ItemType>
             <desktop5:ItemType Type="Directory\Background">
-              <desktop5:Verb Id="EasyInstallerRootBg" Clsid="E111A571-1111-4E00-9A55-001122334466" />
+              <desktop5:Verb Id="IbexRootBg" Clsid="E111A571-1111-4E00-9A55-001122334466" />
             </desktop5:ItemType>
           </desktop4:FileExplorerContextMenus>
         </desktop4:Extension>

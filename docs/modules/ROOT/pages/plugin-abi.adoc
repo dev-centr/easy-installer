@@ -1,12 +1,12 @@
 = Plugin ABI
-:description: How third parties extend Easy Installer.
+:description: How third parties extend Ibex.
 :navtitle: Plugin ABI
 
 Built-in plugins live under `plugins/*.d` and register at load time.
 
 == Subprocess protocol (sketch)
 
-Place `easy-installer-plugin-<id>` on PATH. Future host revisions will call:
+Place `ibex-plugin-<id>` on PATH (legacy `easy-installer-plugin-<id>` may be accepted later). Future host revisions will call:
 
 * `--describe` → metadata (id, displayName, targets, guiUrl)
 * `--build --project=<dir> --out=<dir>`
@@ -14,4 +14,4 @@ Place `easy-installer-plugin-<id>` on PATH. Future host revisions will call:
 
 == msi-generator dual role
 
-The `msi` and `msix` plugins treat link:https://github.com/dev-centr/msi-generator[msi-generator] as both **engine** and **extension**: Easy Installer owns the project UX; msi-generator owns CFB/CAB/table and MSIX ZIP emission.
+The `msi` and `msix` plugins treat link:https://github.com/dev-centr/msi-generator[msi-generator] as both **engine** and **extension**: Ibex owns the project UX; msi-generator owns CFB/CAB/table and MSIX ZIP emission.

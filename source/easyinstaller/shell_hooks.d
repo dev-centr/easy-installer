@@ -21,7 +21,7 @@ string uninstallShell()
     version (Windows)
         return uninstallWindowsShell();
     else version (OSX)
-        return "Remove Easy Installer Quick Actions from ~/Library/Services if you added them.";
+        return "Remove Ibex Quick Actions from ~/Library/Services if you added them.";
     else
         return uninstallLinuxShell();
 }
@@ -34,6 +34,11 @@ version (Windows)
     }
 
     private string cascadeRoot(string classKey)
+    {
+        return `HKCU\Software\Classes\` ~ classKey ~ `\shell\Ibex`;
+    }
+
+    private string legacyCascadeRoot(string classKey)
     {
         return `HKCU\Software\Classes\` ~ classKey ~ `\shell\EasyInstaller`;
     }
@@ -51,7 +56,7 @@ version (Windows)
                 if (r.status != 0)
                     errors ~= r.output;
             }
-            run(`reg add "` ~ root ~ `" /v MUIVerb /d "Easy Installer" /f`);
+            run(`reg add "` ~ root ~ `" /v MUIVerb /d "Ibex" /f`);
             run(`reg add "` ~ root ~ `" /v SubCommands /d "" /f`);
             run(`reg add "` ~ root ~ `" /v Icon /d "` ~ regQuote(exe) ~ `" /f`);
 
@@ -71,11 +76,11 @@ version (Windows)
                 ~ `\" new-project \"%V\" --intent=ci-pipeline --runner=github-actions" /f`);
         }
 
-        executeShell(`reg add "HKCU\Software\Classes\.easyinstaller" /ve /d "EasyInstaller.Project" /f`);
-        executeShell(`reg add "HKCU\Software\Classes\EasyInstaller.Project" /ve /d "Installer Project" /f`);
-        auto shellNew = `HKCU\Software\Classes\.easyinstaller\ShellNew`;
+        executeShell(`reg add "HKCU\Software\Classes\.ibex" /ve /d "Ibex.Project" /f`);
+        executeShell(`reg add "HKCU\Software\Classes\Ibex.Project" /ve /d "Ibex Installer Project" /f`);
+        auto shellNew = `HKCU\Software\Classes\.ibex\ShellNew`;
         executeShell(`reg add "` ~ shellNew ~ `" /v NullFile /d "" /f`);
-        executeShell(`reg add "HKCU\Software\Classes\EasyInstaller.Project\shell\open\command" /ve /d "\"`
+        executeShell(`reg add "HKCU\Software\Classes\Ibex.Project\shell\open\command" /ve /d "\"`
             ~ regQuote(exe) ~ `\" new-project \"%1\"" /f`);
 
         if (errors.length)
@@ -111,7 +116,7 @@ version (Windows)
         mkdirRecurse(buildPath(staging, "Assets"));
         copy(dll, buildPath(staging, "EasyInstallerExplorerCommand.dll"));
         copy(man, buildPath(staging, "AppxManifest.xml"));
-        copy(thisExePath(), buildPath(staging, "easy-installer.exe"));
+        copy(thisExePath(), buildPath(staging, "ibex.exe"));
         auto logoSrc = buildPath(dirName(man), "Assets", "StoreLogo.png");
         if (exists(logoSrc))
             copy(logoSrc, buildPath(staging, "Assets", "StoreLogo.png"));
@@ -137,9 +142,15 @@ version (Windows)
 
     private string uninstallWindowsShell()
     {
+        executeShell(`powershell -NoProfile -Command "Get-AppxPackage -Name 'DevCentr.Ibex.Shell' | Remove-AppxPackage" 2>$null`);
         executeShell(`powershell -NoProfile -Command "Get-AppxPackage -Name 'DevCentr.EasyInstaller.Shell' | Remove-AppxPackage" 2>$null`);
         foreach (ck; [`Directory`, `Directory\Background`])
+        {
             executeShell(`reg delete "` ~ cascadeRoot(ck) ~ `" /f`);
+            executeShell(`reg delete "` ~ legacyCascadeRoot(ck) ~ `" /f`);
+        }
+        executeShell(`reg delete "HKCU\Software\Classes\.ibex" /f`);
+        executeShell(`reg delete "HKCU\Software\Classes\Ibex.Project" /f`);
         executeShell(`reg delete "HKCU\Software\Classes\.easyinstaller" /f`);
         executeShell(`reg delete "HKCU\Software\Classes\EasyInstaller.Project" /f`);
         return "Shell integration removed (best effort).";
@@ -152,11 +163,11 @@ else version (OSX)
         import std.path : expandTilde;
         auto services = expandTilde("~/Library/Services");
         mkdirRecurse(services);
-        auto readme = buildPath(services, "EasyInstaller-README.txt");
+        auto readme = buildPath(services, "Ibex-README.txt");
         write(readme, "Create a Quick Action in Automator:\n"
             ~ "1. Workflow receives folders in Finder\n"
             ~ "2. Run Shell Script: \"" ~ thisExePath() ~ "\" inplace-path add \"$@\"\n"
-            ~ "Save as 'Install in-place (add to PATH)'.\n");
+            ~ "Save as 'Ibex: Install in-place (add to PATH)'.\n");
         return "Wrote Finder Quick Action instructions to " ~ readme;
     }
 }
@@ -176,20 +187,20 @@ else
                 ~ "MimeTypes=inode/directory;\n"
                 ~ "Exec=" ~ exe ~ " " ~ modeArgs ~ " %f\n");
         }
-        writeDesktop("easy-installer-inplace.desktop",
-            "Install in-place (add to PATH)", "inplace-path add");
-        writeDesktop("easy-installer-new.desktop",
-            "New Installer Project", "new-project");
-        writeDesktop("easy-installer-emit-ci.desktop",
-            "New Installer CI pipeline", "new-project --intent=ci-pipeline --runner=github-actions");
+        writeDesktop("ibex-inplace.desktop",
+            "Ibex: Install in-place (add to PATH)", "inplace-path add");
+        writeDesktop("ibex-new.desktop",
+            "Ibex: New Installer Project", "new-project");
+        writeDesktop("ibex-emit-ci.desktop",
+            "Ibex: New Installer CI pipeline", "new-project --intent=ci-pipeline --runner=github-actions");
 
         auto nemo = expandTilde("~/.local/share/nemo/actions");
         mkdirRecurse(nemo);
-        write(buildPath(nemo, "easy-installer-inplace.nemo_action"),
-            "[Nemo Action]\nName=Install in-place (add to PATH)\n"
+        write(buildPath(nemo, "ibex-inplace.nemo_action"),
+            "[Nemo Action]\nName=Ibex: Install in-place (add to PATH)\n"
             ~ "Exec=" ~ exe ~ " inplace-path add %F\nSelection=s\nExtensions=dir;\n");
-        write(buildPath(nemo, "easy-installer-emit-ci.nemo_action"),
-            "[Nemo Action]\nName=New Installer CI pipeline\n"
+        write(buildPath(nemo, "ibex-emit-ci.nemo_action"),
+            "[Nemo Action]\nName=Ibex: New Installer CI pipeline\n"
             ~ "Exec=" ~ exe ~ " new-project %F --intent=ci-pipeline --runner=github-actions\n"
             ~ "Selection=s\nExtensions=dir;\n");
 
@@ -200,6 +211,12 @@ else
     {
         import std.path : expandTilde;
         string[] files = [
+            expandTilde("~/.local/share/file-manager/actions/ibex-inplace.desktop"),
+            expandTilde("~/.local/share/file-manager/actions/ibex-new.desktop"),
+            expandTilde("~/.local/share/file-manager/actions/ibex-emit-ci.desktop"),
+            expandTilde("~/.local/share/nemo/actions/ibex-inplace.nemo_action"),
+            expandTilde("~/.local/share/nemo/actions/ibex-emit-ci.nemo_action"),
+            // transitional cleanup
             expandTilde("~/.local/share/file-manager/actions/easy-installer-inplace.desktop"),
             expandTilde("~/.local/share/file-manager/actions/easy-installer-new.desktop"),
             expandTilde("~/.local/share/file-manager/actions/easy-installer-emit-ci.desktop"),

@@ -1,8 +1,11 @@
 module easyinstaller.versioninfo;
 
 /// Stamped at CI via -version=BuildId_… or fallback.
-enum string appName = "easy-installer";
-enum string appVersion = "0.1.0";
+enum string appName = "ibex";
+enum string appDisplayName = "Ibex";
+enum string appExpansion = "Install Builder EXtension";
+enum string appVersion = "0.2.0";
+enum string appTagline = "Install Builder Extension — author packages and put tools on PATH";
 
 string buildId()
 {
@@ -15,5 +18,5 @@ string buildId()
 string aboutLine()
 {
     import std.string : format;
-    return format("%s %s (build %s)", appName, appVersion, buildId());
+    return format("%s %s (%s; build %s)", appName, appVersion, appExpansion, buildId());
 }

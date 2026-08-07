@@ -164,15 +164,15 @@ string createNewProject(string dir, string plugin, string intent = "package", st
         {
             write(readme, "= Installer project (CI pipeline)\n\n"
                 ~ "This scaffold is meant for CI. Edit `installer.kdl` and `ci-runner.sdl`, then:\n\n"
-                ~ "[source,bash]\n----\neasy-installer emit-ci .\n----\n\n"
+                ~ "[source,bash]\n----\nibex emit-ci .\n----\n\n"
                 ~ "Local package build is optional:\n\n"
-                ~ "[source,bash]\n----\neasy-installer build .\n----\n");
+                ~ "[source,bash]\n----\nibex build .\n----\n");
         }
         else
         {
             write(readme, "= Installer project\n\n"
                 ~ "Edit `installer.kdl`, then run:\n\n"
-                ~ "[source,bash]\n----\neasy-installer build .\n----\n");
+                ~ "[source,bash]\n----\nibex build .\n----\n");
         }
     }
     if (intent == "ci-pipeline")

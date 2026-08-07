@@ -1,5 +1,5 @@
-name: easy-installer
-title: Easy Installer
+name: ibex
+title: Ibex
 version: master
 start_page: ROOT:index.adoc
 nav:

@@ -23,10 +23,14 @@ struct CiRunnerProfile
     string plugin = "portable-zip";
     string tagPattern = "v*";
     bool windows = true;
-    string easyInstaller = "0.1.0";
+    string ibex = "0.2.0"; /// Pin for CLI download in emitted CI (alias: easyInstaller)
     string msiGenerator = "0.2.0";
     bool uploadRelease = true;
     string rootDir;
+
+    /// Transitional alias for older field name.
+    @property string easyInstaller() const { return ibex; }
+    @property void easyInstaller(string v) { ibex = v; }
 }
 
 string ciProfilePath(string dir)
@@ -61,7 +65,7 @@ string toSdl(const ref CiRunnerProfile p)
     lines ~= `    plugin "` ~ esc(p.plugin) ~ `"`;
     lines ~= `    on tags "` ~ esc(p.tagPattern) ~ `"`;
     lines ~= `    windows ` ~ (p.windows ? "true" : "false");
-    lines ~= `    easyInstaller "` ~ esc(p.easyInstaller) ~ `"`;
+    lines ~= `    ibex "` ~ esc(p.ibex) ~ `"`;
     lines ~= `    msiGenerator "` ~ esc(p.msiGenerator) ~ `"`;
     lines ~= `    uploadRelease ` ~ (p.uploadRelease ? "true" : "false");
     lines ~= `}`;
@@ -101,8 +105,9 @@ CiRunnerProfile parseSdl(string text, string rootDir)
             p.tagPattern = extractQuoted(line);
         else if (line.startsWith("windows "))
             p.windows = line.canFind("true");
-        else if (line.startsWith("easyInstaller ") || line.startsWith("easy-installer "))
-            p.easyInstaller = extractQuoted(line);
+        else if (line.startsWith("ibex ") || line.startsWith("easyInstaller ")
+            || line.startsWith("easy-installer "))
+            p.ibex = extractQuoted(line);
         else if (line.startsWith("msiGenerator ") || line.startsWith("msi-generator "))
             p.msiGenerator = extractQuoted(line);
         else if (line.startsWith("uploadRelease ") || line.startsWith("upload-release "))

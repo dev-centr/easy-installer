@@ -2,7 +2,7 @@
 :description: Write GitHub Actions / GitLab / Azure / Jenkins / CircleCI / Bitbucket workflows without building a package locally.
 :navtitle: Emit CI pipelines
 
-Most installer packages are produced in CI. Easy Installer can emit the workflow files and a setup how-to from a small SDLang profile — without running `build`.
+Most installer packages are produced in CI. Ibex can emit the workflow files and a setup how-to from a small SDLang profile — without running `build`.
 
 == Intent split
 
@@ -18,7 +18,7 @@ ciRunner {
     plugin "msix"
     on tags "v*"
     windows true
-    easyInstaller "0.1.0"     // or "latest"
+    ibex "0.2.0"              // or "latest" (alias: easyInstaller)
     msiGenerator "0.2.0"
     uploadRelease true
 }
@@ -31,11 +31,11 @@ Unknown runners fail with the supported list.
 [source,bash]
 ----
 # Scaffold project + profile + emit in one step
-easy-installer new-project . --plugin=portable-zip --intent=ci-pipeline --runner=github-actions
+ibex new-project . --plugin=portable-zip --intent=ci-pipeline --runner=github-actions
 
 # Or emit from an existing installer.kdl / ci-runner.sdl
-easy-installer emit-ci .
-easy-installer emit-ci . --runner=gitlab-ci --plugin=msi
+ibex emit-ci .
+ibex emit-ci . --runner=gitlab-ci --plugin=msi
 ----
 
 Outputs (depending on runner):
@@ -43,7 +43,7 @@ Outputs (depending on runner):
 * Workflow file(s) under `.github/workflows/`, `.gitlab-ci.yml`, `azure-pipelines.installer.yml`, `Jenkinsfile.installer`, `.circleci/config.yml`, or `bitbucket-pipelines.yml`
 * Always: `CI-INSTALLER.adoc` (enable runner, secrets, tags, artifacts, pin bumps)
 
-Emitted jobs download pinned `easy-installer` release assets and run `easy-installer build . --plugin=…`. They do not invent MSI/ZIP on your laptop.
+Emitted jobs download pinned `ibex` release assets and run `ibex build . --plugin=…`. They do not invent MSI/ZIP on your laptop.
 
 == From DevCentr
 

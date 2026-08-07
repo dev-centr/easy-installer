@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "description": "Ibex (Install Builder EXtension) — author installer packages and put tools on PATH.",
+    "homepage": "https://github.com/dev-centr/easy-installer",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/dev-centr/easy-installer/releases/download/v0.2.0/ibex-windows-amd64.exe",
+            "hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "bin": [
+                [
+                    "ibex-windows-amd64.exe",
+                    "ibex"
+                ]
+            ]
+        }
+    },
+    "checkver": {
+        "github": "https://github.com/dev-centr/easy-installer"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/dev-centr/easy-installer/releases/download/v$version/ibex-windows-amd64.exe"
+            }
+        }
+    }
+}

@@ -1,5 +1,13 @@
 = Changelog
 
+== 2026-08-06 — v0.2.0 Ibex rebrand
+
+* Product rename: **Ibex** (Install Builder EXtension); CLI `ibex`
+* Logo: `assets/ibex.svg` + PNG for shell package
+* Release assets: `ibex-*` (dual-ship `easy-installer-*` for one major line)
+* Packaging: winget `DevCentr.Ibex`, Homebrew tap formula, Scoop manifest
+* `ci-runner.sdl` pin field `ibex` (alias `easyInstaller` still parsed)
+
 == 2026-08-06 — CI workflow emit (no package build)
 
 * `ci-runner.sdl` profile + `emit-ci` / `new-project --intent=ci-pipeline`

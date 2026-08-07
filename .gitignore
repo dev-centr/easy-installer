@@ -18,3 +18,7 @@
 !.github/**
 !scripts/
 !scripts/**
+!assets/
+!assets/**
+!packaging/
+!packaging/**

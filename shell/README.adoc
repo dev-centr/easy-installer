@@ -1,15 +1,15 @@
-= Shell integration
-:description: OS file-manager hooks for easy-installer.
+= Shell (Explorer / file managers)
+:description: Building and registering Ibex OS menus.
 
-== Windows
+== Windows Explorer DLL
 
-* **Win11 (preferred):** build `shell/explorer_command` with MSVC (`pwsh ./build.ps1`), then `easy-installer shell install` registers the sparse package.
-* **Fallback:** classic HKCU cascading menu + `.easyinstaller` ShellNew type when modern registration is unavailable (no DLL, older Windows, unsigned package).
+Build with MSVC (see `explorer_command/build.ps1`). Output: `EasyInstallerExplorerCommand.dll` (filename kept for CLSID stability; UI title is **Ibex**).
 
-== macOS
+Sparse package: `sparse-package/AppxManifest.xml` (`DevCentr.Ibex.Shell`, executable `ibex.exe`).
 
-`shell install` writes Quick Action instructions under `~/Library/Services`.
+== Install
 
-== Linux
-
-DES-EMA actions under `~/.local/share/file-manager/actions/` plus a Nemo action.
+[source,bash]
+----
+ibex shell install
+----

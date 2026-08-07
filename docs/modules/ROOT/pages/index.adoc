@@ -1,30 +1,37 @@
-= Easy Installer
-:description: Cross-platform installer project host with plugins and Install in-place (add to PATH).
+= Ibex
+:description: Install Builder EXtension — author installer packages and put tools on PATH.
 :navtitle: Introduction
 
-Easy Installer is a CLI (and DevCentr surface) for two jobs that Windows and other OS shells leave unfinished:
+**Ibex** (*Install Builder EXtension*) is a CLI (and DevCentr / file-manager surface) for two jobs OS shells leave unfinished:
 
 * **Install in-place (add to PATH)** — put a folder on the user PATH so binaries inside it run without a full package install.
 * **Installer projects** — scaffold `installer.kdl`, pick a backend plugin, and build artifacts (portable zip, NSIS, Inno, MSI/MSIX via msi-generator, AppImage stubs).
 
+It is *not* a software catalog installer (it does not replace winget, apt, or Homebrew for installing third-party apps).
+
+image::https://raw.githubusercontent.com/dev-centr/easy-installer/main/assets/ibex.svg[Ibex logo,80]
+
 == Get the binary
 
+* winget: `winget install DevCentr.Ibex`
+* Homebrew: `brew tap dev-centr/tap && brew install ibex`
 * Releases: link:https://github.com/dev-centr/easy-installer/releases[GitHub Releases]
-* After install: `easy-installer shell install` for file-manager menus
+* After install: `ibex shell install` for file-manager menus
 
 == Commands (quick)
 
 [source,bash]
 ----
-easy-installer inplace-path add .
-easy-installer new-project . --plugin=portable-zip
-easy-installer build .
-easy-installer plugins list
-easy-installer plugins install-gui inno
+ibex inplace-path add .
+ibex new-project . --plugin=portable-zip
+ibex build .
+ibex emit-ci . --runner=github-actions
+ibex plugins list
+ibex plugins install-gui inno
 ----
 
 == Related
 
 * Engine for MSI/MSIX plugins: xref:msi-generator:ROOT:index.adoc[MSI/MSIX Generator]
-* Portal overview: xref:home:tools/easy-installer.adoc[Easy Installer (portal)]
+* Portal overview: xref:home:tools/ibex.adoc[Ibex (portal)]
 * Upstream packaging roadmap: xref:home:tools/native-installer-roadmap.adoc[Native installer builder roadmap]
