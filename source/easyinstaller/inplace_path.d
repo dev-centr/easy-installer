@@ -1,12 +1,11 @@
 module easyinstaller.inplace_path;
 
-import easyinstaller.paths : ensureConfigDirs, ledgerPath;
+import easyinstaller.paths : ensureConfigDirs, ledgerPath, configRoot;
 import std.algorithm : canFind, filter, map;
 import std.array : array, join, split;
 import std.file : exists, readText, write;
-import std.path : absolutePath, buildNormalizedPath;
+import std.path : absolutePath, buildNormalizedPath, buildPath;
 import std.string : strip, splitLines, toLower, replace;
-import std.stdio : writeln, stderr;
 
 version (Windows)
 {
@@ -52,7 +51,6 @@ version (Windows)
 
     private void writeUserPath(string value)
     {
-        // Escape for PowerShell single-quoted string
         auto esc = value.replace("'", "''");
         auto r = executeShell(
             `powershell -NoProfile -Command "[Environment]::SetEnvironmentVariable('Path','`
@@ -76,27 +74,19 @@ version (Windows)
         return buildNormalizedPath(a).toLower == buildNormalizedPath(b).toLower;
     }
 }
-else
+
+private string pathSnippetFile()
 {
-    import std.path : expandTilde;
-    import std.process : environment;
+    return buildPath(configRoot(), "path-snippet.sh");
+}
 
-    private string profileSnippetPath()
-    {
-        return buildPath(configRootVia(), "path-snippet.sh");
-    }
-
-    private string configRootVia()
-    {
-        import easyinstaller.paths : configRoot;
-        return configRoot();
-    }
-
-    private string[] readProfilePaths()
-    {
-        // Ledger is source of truth; also mirror into snippet sourced from shell rc.
-        return loadLedger();
-    }
+private void writeUnixSnippet(string[] paths)
+{
+    ensureConfigDirs();
+    string body = "# managed by ibex\n";
+    foreach (p; paths)
+        body ~= "export PATH=\"" ~ p ~ ":$PATH\"\n";
+    write(pathSnippetFile(), body);
 }
 
 string addInPlace(string dir)
@@ -118,40 +108,25 @@ string addInPlace(string dir)
     }
     else
     {
-        auto ledger = loadLedger();
-        if (ledger.canFind(abs))
+        auto existing = loadLedger();
+        if (existing.canFind(abs))
             return "Already registered: " ~ abs;
-        // Write/update snippet and remind user to source it.
-        ensureConfigDirs();
-        import easyinstaller.paths : configRoot;
-        import std.path : buildPath;
-        auto snippet = buildPath(configRoot(), "path-snippet.sh");
-        auto lines = loadLedger() ~ abs;
-        string body = "# managed by easy-installer\n";
-        foreach (p; lines)
-            body ~= "export PATH=\"" ~ p ~ ":$PATH\"\n";
-        write(snippet, body);
-        // Also append to ~/.local/bin note — primary mechanism is PATH export snippet.
+        writeUnixSnippet(existing ~ abs);
     }
 
-    auto ledger = loadLedger();
-    if (!ledger.canFind(abs))
+    auto entries = loadLedger();
+    if (!entries.canFind(abs))
     {
-        ledger ~= abs;
-        saveLedger(ledger);
+        entries ~= abs;
+        saveLedger(entries);
     }
 
     version (Windows)
         return "Added to user PATH (in-place): " ~ abs
             ~ "\nOpen a new terminal for the change to take effect.";
     else
-    {
-        import easyinstaller.paths : configRoot;
-        import std.path : buildPath;
-        auto snippet = buildPath(configRoot(), "path-snippet.sh");
         return "Registered in-place PATH entry: " ~ abs
-            ~ "\nAdd to your shell rc:  source \"" ~ snippet ~ "\"";
-    }
+            ~ "\nAdd to your shell rc:  source \"" ~ pathSnippetFile() ~ "\"";
 }
 
 string removeInPlace(string dir)
@@ -168,28 +143,15 @@ string removeInPlace(string dir)
                 kept ~= p;
         }
         writeUserPath(joinPath(kept));
+        auto entries = loadLedger().filter!(p => !pathEquals(p, abs)).array;
+        saveLedger(entries);
     }
     else
     {
-        import easyinstaller.paths : configRoot, ensureConfigDirs;
-        import std.path : buildPath;
-        ensureConfigDirs();
-        auto snippet = buildPath(configRoot(), "path-snippet.sh");
-        auto lines = loadLedger().filter!(p => p != abs).array;
-        string body = "# managed by easy-installer\n";
-        foreach (p; lines)
-            body ~= "export PATH=\"" ~ p ~ ":$PATH\"\n";
-        write(snippet, body);
+        auto entries = loadLedger().filter!(p => p != abs && normalizeDir(p) != abs).array;
+        writeUnixSnippet(entries);
+        saveLedger(entries);
     }
-
-    auto ledger = loadLedger().filter!(p => normalizeDir(p) != abs
-        && p != abs).array;
-    // filter case-insensitively on Windows
-    version (Windows)
-    {
-        ledger = loadLedger().filter!(p => !pathEquals(p, abs)).array;
-    }
-    saveLedger(ledger);
     return "Removed from PATH ledger (and user PATH where applicable): " ~ abs;
 }
 
