@@ -30,7 +30,7 @@ static HINSTANCE g_hInst = nullptr;
 static void ModuleAddRef() { InterlockedIncrement(&g_moduleLocks); }
 static void ModuleRelease() { InterlockedDecrement(&g_moduleLocks); }
 
-enum class ModeKind { InPlacePath, NewProject };
+enum class ModeKind { InPlacePath, NewProject, EmitCi };
 
 static std::wstring ModuleDirectory()
 {
@@ -89,6 +89,8 @@ static HRESULT LaunchMode(ModeKind mode, IShellItemArray* items)
     const wchar_t* modeArgs = L"inplace-path add";
     if (mode == ModeKind::NewProject)
         modeArgs = L"new-project";
+    else if (mode == ModeKind::EmitCi)
+        modeArgs = L"new-project --intent=ci-pipeline --runner=github-actions";
 
     wchar_t cmdline[2048];
     hr = StringCchPrintfW(cmdline, ARRAYSIZE(cmdline),
@@ -182,13 +184,14 @@ public:
     {
         if (!rgelt) return E_POINTER;
         ULONG got = 0;
-        while (got < celt && m_index < 2)
+        while (got < celt && m_index < 3)
         {
             IExplorerCommand* cmd = nullptr;
             switch (m_index)
             {
             case 0: cmd = new (std::nothrow) SubCommand(ModeKind::InPlacePath, L"Install in-place (add to PATH)"); break;
             case 1: cmd = new (std::nothrow) SubCommand(ModeKind::NewProject, L"New Installer Project"); break;
+            case 2: cmd = new (std::nothrow) SubCommand(ModeKind::EmitCi, L"New Installer CI pipeline"); break;
             }
             ++m_index;
             if (!cmd) return E_OUTOFMEMORY;
@@ -199,8 +202,8 @@ public:
     }
     IFACEMETHODIMP Skip(ULONG celt) override
     {
-        m_index = (m_index + celt > 2) ? 2 : m_index + celt;
-        return (m_index < 2) ? S_OK : S_FALSE;
+        m_index = (m_index + celt > 3) ? 3 : m_index + celt;
+        return (m_index < 3) ? S_OK : S_FALSE;
     }
     IFACEMETHODIMP Reset() override { m_index = 0; return S_OK; }
     IFACEMETHODIMP Clone(IEnumExplorerCommand** ppenum) override

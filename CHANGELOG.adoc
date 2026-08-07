@@ -1,5 +1,13 @@
 = Changelog
 
+== 2026-08-06 — CI workflow emit (no package build)
+
+* `ci-runner.sdl` profile + `emit-ci` / `new-project --intent=ci-pipeline`
+* Emitters: GitHub Actions, GitLab CI, Azure Pipelines, Jenkins, CircleCI, Bitbucket Pipelines
+* Always writes `CI-INSTALLER.adoc` (enable, secrets, tags, artifacts, pins)
+* Shell menus: New Installer CI pipeline
+* Docs: xref:howto-emit-ci.adoc[How-to: emit CI pipelines]
+
 == 2026-08-06 — v0.1.0 initial release
 
 * Host CLI: `inplace-path`, `new-project`, `build`, `plugins`, `shell`, `--version`, `debug-dump`

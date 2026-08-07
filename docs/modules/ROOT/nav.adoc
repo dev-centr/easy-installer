@@ -1,6 +1,7 @@
 * xref:index.adoc[Introduction]
 * xref:howto-inplace-path.adoc[How-to: in-place PATH]
 * xref:howto-projects.adoc[How-to: installer projects]
+* xref:howto-emit-ci.adoc[How-to: emit CI pipelines]
 * xref:plugins.adoc[Plugins]
 * xref:plugin-abi.adoc[Plugin ABI]
 * xref:shell-integration.adoc[Shell integration]

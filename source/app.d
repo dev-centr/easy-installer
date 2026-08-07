@@ -2,12 +2,14 @@ import easyinstaller.debugdump;
 import easyinstaller.inplace_path;
 import easyinstaller.plugin;
 import easyinstaller.project;
+import easyinstaller.ci_profile;
+import easyinstaller.ci_emit;
 import easyinstaller.shell_hooks;
 import easyinstaller.versioninfo;
 import std.file : mkdirRecurse, exists;
 import std.path : buildPath, absolutePath;
 import std.stdio : writeln, stderr;
-import std.string : toLower;
+import std.string : toLower, startsWith;
 
 // Pull in builtin plugins
 import easyinstaller.plugins.portable_zip;
@@ -43,6 +45,8 @@ int main(string[] args)
             return cmdInplace(args[2 .. $]);
         case "new-project":
             return cmdNewProject(args[2 .. $]);
+        case "emit-ci":
+            return cmdEmitCi(args[2 .. $]);
         case "build":
             return cmdBuild(args[2 .. $]);
         case "plugins":
@@ -71,12 +75,16 @@ int usage()
     writeln(`
 Usage:
   easy-installer inplace-path add|remove|list [dir]
-  easy-installer new-project <dir> [--plugin=<id>]
+  easy-installer new-project <dir> [--plugin=<id>] [--intent=package|ci-pipeline] [--runner=<id>]
+  easy-installer emit-ci [dir] [--runner=<id>] [--plugin=<id>]
   easy-installer build <dir> [--plugin=<id>]
   easy-installer plugins list|info <id>|install-gui <id>
   easy-installer shell install|uninstall
   easy-installer --version
   easy-installer debug-dump [file]
+
+CI runners: github-actions, gitlab-ci, azure-pipelines, jenkins, circleci, bitbucket-pipelines
+emit-ci writes workflow files + CI-INSTALLER.adoc only (no package build).
 `);
     return 0;
 }
@@ -120,13 +128,62 @@ int cmdNewProject(string[] args)
     }
     string dir = args[0];
     string plugin = "portable-zip";
+    string intent = "package";
+    string runner = "github-actions";
     foreach (a; args[1 .. $])
     {
         if (a.length > 9 && a[0 .. 9] == "--plugin=")
             plugin = a[9 .. $];
+        else if (a.length > 9 && a[0 .. 9] == "--intent=")
+            intent = a[9 .. $];
+        else if (a.length > 9 && a[0 .. 9] == "--runner=")
+            runner = a[9 .. $];
     }
-    auto path = createNewProject(absolutePath(dir), plugin);
+    auto path = createNewProject(absolutePath(dir), plugin, intent, runner);
     writeln("Created ", path);
+    if (intent == "ci-pipeline")
+        writeln("Also wrote ci-runner.sdl and emitted CI files (see CI-INSTALLER.adoc).");
+    return 0;
+}
+
+int cmdEmitCi(string[] args)
+{
+    string dir = ".";
+    string runnerOverride;
+    string pluginOverride;
+    foreach (a; args)
+    {
+        if (a.length > 9 && a[0 .. 9] == "--runner=")
+            runnerOverride = a[9 .. $];
+        else if (a.length > 9 && a[0 .. 9] == "--plugin=")
+            pluginOverride = a[9 .. $];
+        else if (!a.startsWith("--"))
+            dir = a;
+    }
+    dir = absolutePath(dir);
+
+    CiRunnerProfile profile;
+    auto profilePath = ciProfilePath(dir);
+    if (exists(profilePath))
+        profile = loadCiProfile(dir);
+    else
+    {
+        string plugin = "portable-zip";
+        if (exists(projectFilePath(dir)))
+            plugin = loadProject(dir).plugin;
+        profile = defaultCiProfile(dir,
+            runnerOverride.length ? runnerOverride : "github-actions", plugin);
+        saveCiProfile(profile);
+        writeln("Wrote ", profilePath);
+    }
+    if (runnerOverride.length)
+        profile.runner = runnerOverride;
+    if (pluginOverride.length)
+        profile.plugin = pluginOverride;
+    saveCiProfile(profile);
+
+    auto result = emitCi(dir, profile);
+    writeln(result.summary);
     return 0;
 }
 

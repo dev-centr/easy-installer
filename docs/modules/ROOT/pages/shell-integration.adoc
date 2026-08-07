@@ -12,7 +12,7 @@ easy-installer shell uninstall
 
 == Windows
 
-* **Win11 preferred:** sparse package + `IExplorerCommand` DLL (`shell/explorer_command`; build with MSVC).
+* **Win11 preferred:** sparse package + `IExplorerCommand` DLL (`shell/explorer_command`; build with MSVC) — Install in-place, New Installer Project, New Installer CI pipeline.
 * **Fallback:** classic HKCU cascading menu + `.easyinstaller` type for older Windows or when modern registration fails.
 
 == macOS

@@ -64,6 +64,11 @@ version (Windows)
             run(`reg add "` ~ np ~ `" /ve /d "New Installer Project" /f`);
             run(`reg add "` ~ np ~ `\command" /ve /d "\"` ~ regQuote(exe)
                 ~ `\" new-project \"%V\"" /f`);
+
+            auto ci = root ~ `\shell\03emitci`;
+            run(`reg add "` ~ ci ~ `" /ve /d "New Installer CI pipeline" /f`);
+            run(`reg add "` ~ ci ~ `\command" /ve /d "\"` ~ regQuote(exe)
+                ~ `\" new-project \"%V\" --intent=ci-pipeline --runner=github-actions" /f`);
         }
 
         executeShell(`reg add "HKCU\Software\Classes\.easyinstaller" /ve /d "EasyInstaller.Project" /f`);
@@ -175,12 +180,18 @@ else
             "Install in-place (add to PATH)", "inplace-path add");
         writeDesktop("easy-installer-new.desktop",
             "New Installer Project", "new-project");
+        writeDesktop("easy-installer-emit-ci.desktop",
+            "New Installer CI pipeline", "new-project --intent=ci-pipeline --runner=github-actions");
 
         auto nemo = expandTilde("~/.local/share/nemo/actions");
         mkdirRecurse(nemo);
         write(buildPath(nemo, "easy-installer-inplace.nemo_action"),
             "[Nemo Action]\nName=Install in-place (add to PATH)\n"
             ~ "Exec=" ~ exe ~ " inplace-path add %F\nSelection=s\nExtensions=dir;\n");
+        write(buildPath(nemo, "easy-installer-emit-ci.nemo_action"),
+            "[Nemo Action]\nName=New Installer CI pipeline\n"
+            ~ "Exec=" ~ exe ~ " new-project %F --intent=ci-pipeline --runner=github-actions\n"
+            ~ "Selection=s\nExtensions=dir;\n");
 
         return "Linux file-manager actions installed under ~/.local/share/file-manager/actions.";
     }
@@ -191,7 +202,9 @@ else
         string[] files = [
             expandTilde("~/.local/share/file-manager/actions/easy-installer-inplace.desktop"),
             expandTilde("~/.local/share/file-manager/actions/easy-installer-new.desktop"),
+            expandTilde("~/.local/share/file-manager/actions/easy-installer-emit-ci.desktop"),
             expandTilde("~/.local/share/nemo/actions/easy-installer-inplace.nemo_action"),
+            expandTilde("~/.local/share/nemo/actions/easy-installer-emit-ci.nemo_action"),
         ];
         foreach (f; files)
             if (exists(f))

@@ -1,0 +1,58 @@
+= How-to: emit CI installer pipelines
+:description: Write GitHub Actions / GitLab / Azure / Jenkins / CircleCI / Bitbucket workflows without building a package locally.
+:navtitle: Emit CI pipelines
+
+Most installer packages are produced in CI. Easy Installer can emit the workflow files and a setup how-to from a small SDLang profile — without running `build`.
+
+== Intent split
+
+* **Package** — `new-project` / `build` (local plugin package).
+* **CI pipeline** — `emit-ci` / `new-project --intent=ci-pipeline` (workflows + `CI-INSTALLER.adoc` only).
+
+== Profile (`ci-runner.sdl`)
+
+[source,sdl]
+----
+ciRunner {
+    runner "github-actions"   // gitlab-ci | azure-pipelines | jenkins | circleci | bitbucket-pipelines
+    plugin "msix"
+    on tags "v*"
+    windows true
+    easyInstaller "0.1.0"     // or "latest"
+    msiGenerator "0.2.0"
+    uploadRelease true
+}
+----
+
+Unknown runners fail with the supported list.
+
+== Commands
+
+[source,bash]
+----
+# Scaffold project + profile + emit in one step
+easy-installer new-project . --plugin=portable-zip --intent=ci-pipeline --runner=github-actions
+
+# Or emit from an existing installer.kdl / ci-runner.sdl
+easy-installer emit-ci .
+easy-installer emit-ci . --runner=gitlab-ci --plugin=msi
+----
+
+Outputs (depending on runner):
+
+* Workflow file(s) under `.github/workflows/`, `.gitlab-ci.yml`, `azure-pipelines.installer.yml`, `Jenkinsfile.installer`, `.circleci/config.yml`, or `bitbucket-pipelines.yml`
+* Always: `CI-INSTALLER.adoc` (enable runner, secrets, tags, artifacts, pin bumps)
+
+Emitted jobs download pinned `easy-installer` release assets and run `easy-installer build . --plugin=…`. They do not invent MSI/ZIP on your laptop.
+
+== From DevCentr
+
+* New Installer dialog → **CI pipeline only** + runner dropdown
+* Explorer / CLI: `dev-center --mode=emit-ci --path=…`
+* File-manager menu: **New Installer CI pipeline…**
+
+== Related
+
+* xref:howto-projects.adoc[How-to: installer projects]
+* xref:shell-integration.adoc[Shell integration]
+* https://github.com/dev-centr/msi-generator[msi-generator]

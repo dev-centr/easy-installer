@@ -26,8 +26,21 @@ easy-installer build . --plugin=nsis
 
 Artifacts land under `dist/`.
 
+== CI without a local package build
+
+To emit workflows only (GitHub Actions, GitLab CI, Azure Pipelines, Jenkins, CircleCI, Bitbucket):
+
+[source,bash]
+----
+easy-installer new-project . --intent=ci-pipeline --runner=github-actions
+# or later:
+easy-installer emit-ci .
+----
+
+See xref:howto-emit-ci.adoc[How-to: emit CI pipelines].
+
 == From DevCentr
 
 * New menu / Content Create → Packaging → **Installer Project**
-* Toolbar → **New Installer**
-* CLI: `dev-center --mode=new-installer --path=…`
+* Toolbar → **New Installer** (Package or **CI pipeline only**)
+* CLI: `dev-center --mode=new-installer --path=…` or `--mode=emit-ci`

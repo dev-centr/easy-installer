@@ -1,0 +1,418 @@
+module easyinstaller.ci_emit;
+
+import easyinstaller.ci_profile;
+import easyinstaller.project : InstallerProject, loadProject, projectFilePath;
+import std.array : join, replace;
+import std.file : exists, mkdirRecurse, write;
+import std.path : buildPath, dirName;
+import std.string : format;
+
+struct EmitResult
+{
+    string[] written;
+    string summary;
+}
+
+/// Emit CI workflow(s) + CI-INSTALLER.adoc; does not build packages.
+EmitResult emitCi(string projectDir, CiRunnerProfile profile)
+{
+    validateRunner(profile.runner);
+    auto proj = loadProject(projectDir);
+    // Prefer profile plugin when set
+    if (profile.plugin.length)
+        proj.plugin = profile.plugin;
+
+    string[] written;
+    final switch (profile.runner)
+    {
+    case "github-actions":
+        written ~= writeFile(buildPath(proj.rootDir, ".github", "workflows", "installer.yml"),
+            emitGitHubActions(proj, profile));
+        break;
+    case "gitlab-ci":
+        written ~= writeFile(buildPath(proj.rootDir, ".gitlab-ci-installer.yml"),
+            emitGitLabCi(proj, profile));
+        written ~= writeFile(buildPath(proj.rootDir, ".gitlab-ci.yml"),
+            emitGitLabCiFull(proj, profile));
+        break;
+    case "azure-pipelines":
+        written ~= writeFile(buildPath(proj.rootDir, "azure-pipelines.installer.yml"),
+            emitAzurePipelines(proj, profile));
+        break;
+    case "jenkins":
+        written ~= writeFile(buildPath(proj.rootDir, "Jenkinsfile.installer"),
+            emitJenkins(proj, profile));
+        break;
+    case "circleci":
+        written ~= writeFile(buildPath(proj.rootDir, ".circleci", "config.yml"),
+            emitCircleCi(proj, profile));
+        break;
+    case "bitbucket-pipelines":
+        written ~= writeFile(buildPath(proj.rootDir, "bitbucket-pipelines.yml"),
+            emitBitbucket(proj, profile));
+        break;
+    }
+
+    auto howto = buildPath(proj.rootDir, "CI-INSTALLER.adoc");
+    write(howto, emitHowto(proj, profile, written));
+    written ~= howto;
+
+    EmitResult r;
+    r.written = written;
+    r.summary = "Emitted CI pipeline for " ~ profile.runner ~ " (no package build).\n"
+        ~ written.join("\n");
+    return r;
+}
+
+private string writeFile(string path, string content)
+{
+    auto dir = dirName(path);
+    if (!exists(dir))
+        mkdirRecurse(dir);
+    write(path, content);
+    return path;
+}
+
+private string runnerImage(const ref CiRunnerProfile p)
+{
+    return p.windows ? "windows-latest" : "ubuntu-latest";
+}
+
+private string downloadEasyInstallerBash(const ref CiRunnerProfile p)
+{
+    auto ver = p.easyInstaller;
+    if (ver == "latest")
+        return `# Resolve latest easy-installer release asset for this OS
+curl -fsSL -o easy-installer "https://github.com/dev-centr/easy-installer/releases/latest/download/easy-installer-linux-amd64"
+chmod +x easy-installer
+`;
+    return format!`curl -fsSL -o easy-installer "https://github.com/dev-centr/easy-installer/releases/download/v%s/easy-installer-linux-amd64"
+chmod +x easy-installer
+`(ver);
+}
+
+private string downloadEasyInstallerPwsh(const ref CiRunnerProfile p)
+{
+    auto ver = p.easyInstaller;
+    auto tag = ver == "latest" ? "latest/download" : ("download/v" ~ ver);
+    return format!`$url = "https://github.com/dev-centr/easy-installer/releases/%s/easy-installer-windows-amd64.exe"
+Invoke-WebRequest -Uri $url -OutFile easy-installer.exe
+`(tag);
+}
+
+private string buildStepBash(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    return format!`./easy-installer build . --plugin=%s
+`(p.plugin.length ? p.plugin : proj.plugin);
+}
+
+private string buildStepPwsh(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    return format!`.\easy-installer.exe build . --plugin=%s
+`(p.plugin.length ? p.plugin : proj.plugin);
+}
+
+string emitGitHubActions(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    auto os = runnerImage(p);
+    auto isWin = p.windows;
+    string steps;
+    if (isWin)
+    {
+        steps = `      - name: Download easy-installer
+        shell: pwsh
+        run: |
+` ~ indent(downloadEasyInstallerPwsh(p), 10) ~ `
+      - name: Build installer package
+        shell: pwsh
+        run: |
+` ~ indent(buildStepPwsh(proj, p), 10);
+    }
+    else
+    {
+        steps = `      - name: Download easy-installer
+        run: |
+` ~ indent(downloadEasyInstallerBash(p), 10) ~ `
+      - name: Build installer package
+        run: |
+` ~ indent(buildStepBash(proj, p), 10);
+    }
+
+    string release = "";
+    if (p.uploadRelease)
+    {
+        release = `
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-dist
+          path: dist/
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+`;
+    }
+
+    return format!`# Generated by easy-installer emit-ci — do not hand-edit pins without updating ci-runner.sdl
+name: Installer
+
+on:
+  push:
+    tags:
+      - '%s'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-installer:
+    runs-on: %s
+    steps:
+      - uses: actions/checkout@v4
+%s%s
+`(p.tagPattern, os, steps, release);
+}
+
+string emitGitLabCi(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    // Merge-safe job snippet
+    auto image = p.windows ? "mcr.microsoft.com/windows/servercore:ltsc2022" : "ubuntu:24.04";
+    auto script = p.windows
+        ? indent(downloadEasyInstallerPwsh(p) ~ buildStepPwsh(proj, p), 4)
+        : indent(downloadEasyInstallerBash(p) ~ buildStepBash(proj, p), 4);
+    return format!`# Job snippet — include from .gitlab-ci.yml or copy under a stage.
+# Full starter file also written as .gitlab-ci.yml
+installer:build:
+  stage: package
+  image: %s
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+  script:
+%s
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+`(image, script);
+}
+
+string emitGitLabCiFull(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    return `stages:
+  - package
+
+` ~ emitGitLabCi(proj, p);
+}
+
+string emitAzurePipelines(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    auto pool = p.windows ? "windows-latest" : "ubuntu-latest";
+    auto script = p.windows
+        ? downloadEasyInstallerPwsh(p) ~ buildStepPwsh(proj, p)
+        : downloadEasyInstallerBash(p) ~ buildStepBash(proj, p);
+    return format!`# Generated by easy-installer emit-ci
+trigger:
+  tags:
+    include:
+      - %s
+
+pool:
+  vmImage: %s
+
+steps:
+  - checkout: self
+  - %s: |
+%s
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: dist
+      artifact: installer-dist
+`(p.tagPattern, pool, p.windows ? "powershell" : "bash", indent(script, 6));
+}
+
+string emitJenkins(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    auto agent = p.windows ? "windows" : "linux";
+    auto script = p.windows
+        ? downloadEasyInstallerPwsh(p) ~ buildStepPwsh(proj, p)
+        : downloadEasyInstallerBash(p) ~ buildStepBash(proj, p);
+    return format!`// Generated by easy-installer emit-ci
+pipeline {
+  agent { label '%s' }
+  triggers { // also build from tags matching %s via multibranch/tag discovery
+    pollSCM('')
+  }
+  stages {
+    stage('Build installer') {
+      steps {
+        %s '''
+%s
+        '''
+      }
+    }
+    stage('Archive') {
+      steps {
+        archiveArtifacts artifacts: 'dist/**', fingerprint: true
+      }
+    }
+  }
+}
+`(agent, p.tagPattern, p.windows ? "powershell" : "sh", indent(script, 8));
+}
+
+string emitCircleCi(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    // CircleCI Windows is orb-based; default to Linux executor with note in howto for Windows
+    auto script = downloadEasyInstallerBash(p) ~ buildStepBash(proj, p);
+    return format!`# Generated by easy-installer emit-ci
+version: 2.1
+jobs:
+  build-installer:
+    docker:
+      - image: cimg/base:2024.01
+    steps:
+      - checkout
+      - run:
+          name: Build installer package
+          command: |
+%s
+      - store_artifacts:
+          path: dist
+workflows:
+  installer:
+    jobs:
+      - build-installer:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+`(indent(script, 12));
+}
+
+string emitBitbucket(const ref InstallerProject proj, const ref CiRunnerProfile p)
+{
+    auto script = downloadEasyInstallerBash(p) ~ buildStepBash(proj, p);
+    return format!`# Generated by easy-installer emit-ci
+image: atlassian/default-image:4
+
+pipelines:
+  tags:
+    '%s':
+      - step:
+          name: Build installer
+          script:
+%s
+          artifacts:
+            - dist/**
+`(p.tagPattern, indentLines(script, "            - "));
+}
+
+private string indent(string text, int spaces)
+{
+    import std.string : splitLines;
+    string pad;
+    foreach (i; 0 .. spaces)
+        pad ~= " ";
+    string[] outLines;
+    foreach (line; text.splitLines)
+        outLines ~= pad ~ line;
+    return outLines.join("\n");
+}
+
+private string indentLines(string text, string prefix)
+{
+    import std.string : splitLines;
+    string[] outLines;
+    foreach (line; text.splitLines)
+    {
+        if (!line.length)
+            continue;
+        outLines ~= prefix ~ line;
+    }
+    return outLines.join("\n");
+}
+
+string emitHowto(const ref InstallerProject proj, const ref CiRunnerProfile p, string[] writtenFiles)
+{
+    string runnerTitle = p.runner;
+    string enable;
+    string secrets;
+    string tags;
+    string artifacts;
+
+    final switch (p.runner)
+    {
+    case "github-actions":
+        enable = "Commit `.github/workflows/installer.yml`. Actions are enabled by default on GitHub-hosted repos.";
+        secrets = "`GITHUB_TOKEN` is provided automatically for `softprops/action-gh-release`. For private deps or signing certs, add repository secrets under Settings → Secrets and variables → Actions.";
+        tags = format!"Push a tag matching `%s` (example: `git tag v1.0.0 && git push origin v1.0.0`), or run the workflow via Actions → Installer → Run workflow."(p.tagPattern);
+        artifacts = "Download the `installer-dist` artifact from the run, or the files attached to the GitHub Release when `uploadRelease` is true.";
+        break;
+    case "gitlab-ci":
+        enable = "Enable CI/CD on the project. Prefer merging the job from `.gitlab-ci-installer.yml` into your existing `.gitlab-ci.yml`; a starter full file is also written as `.gitlab-ci.yml` (overwrite carefully).";
+        secrets = "Use CI/CD variables for deploy tokens or signing material (Settings → CI/CD → Variables).";
+        tags = "Push a Git tag matching `/^v/` (see job `rules`). Adjust `ci-runner.sdl` and re-run `emit-ci` for a different pattern.";
+        artifacts = "Pipeline → Job → Artifacts (`dist/`).";
+        break;
+    case "azure-pipelines":
+        enable = "Create a pipeline pointing at `azure-pipelines.installer.yml` (Pipelines → New pipeline → Existing YAML).";
+        secrets = "Use a service connection / variable group for signing certs. `PublishPipelineArtifact` needs no extra secret for same-org downloads.";
+        tags = format!"Push tags matching `%s`. Ensure the pipeline trigger includes tags."(p.tagPattern);
+        artifacts = "Pipeline run → Artifacts → `installer-dist`.";
+        break;
+    case "jenkins":
+        enable = "Add a Multibranch Pipeline or Pipeline job that loads `Jenkinsfile.installer`. Discover tags if you want tag builds.";
+        secrets = "Credentials Binding for any signing material; archiveArtifacts needs none.";
+        tags = format!"Configure tag discovery for pattern `%s`, or trigger builds manually."(p.tagPattern);
+        artifacts = "Build → Artifacts (`dist/**`).";
+        break;
+    case "circleci":
+        enable = "Commit `.circleci/config.yml` and follow the project on CircleCI. Windows builds need the Windows executor/orb — this starter uses Linux Docker; set `windows true` carefully and customize the executor for MSI/MSIX.";
+        secrets = "Project Settings → Environment Variables / Contexts for signing.";
+        tags = "Tag pushes matching `/^v.*/` run `build-installer` (branches ignored).";
+        artifacts = "Job → Artifacts (`dist`).";
+        break;
+    case "bitbucket-pipelines":
+        enable = "Enable Pipelines on the Bitbucket repository and commit `bitbucket-pipelines.yml`.";
+        secrets = "Repository variables for signing or deploy credentials.";
+        tags = format!"Tag pipelines keyed by `%s`."(p.tagPattern);
+        artifacts = "Pipeline → Artifacts (`dist/**`).";
+        break;
+    }
+
+    string filesList;
+    foreach (f; writtenFiles)
+        filesList ~= "* `" ~ f ~ "`\n";
+
+    // Build with concatenation — AsciiDoc backticks conflict with D wysiwyg format!`…`
+    return "= CI installer pipeline\n"
+        ~ ":description: How to enable and use the emitted installer CI for " ~ p.runner ~ ".\n\n"
+        ~ "Generated by `easy-installer emit-ci` for project *" ~ proj.name
+        ~ "* (plugin `" ~ p.plugin ~ "`).\n"
+        ~ "This path does *not* build a package locally — it only writes CI config.\n\n"
+        ~ "== Files written\n\n"
+        ~ filesList ~ "\n"
+        ~ "== Enable the runner\n\n"
+        ~ enable ~ "\n\n"
+        ~ "== Secrets / credentials\n\n"
+        ~ secrets ~ "\n\n"
+        ~ "== Tags and triggers\n\n"
+        ~ tags ~ "\n\n"
+        ~ "== Where artifacts land\n\n"
+        ~ artifacts ~ "\n\n"
+        ~ "== Pins\n\n"
+        ~ "Edit `ci-runner.sdl` then re-run:\n\n"
+        ~ "[source,bash]\n----\neasy-installer emit-ci .\n----\n\n"
+        ~ "Current pins: `easyInstaller=" ~ p.easyInstaller ~ "`, `msiGenerator="
+        ~ p.msiGenerator ~ "`.\n\n"
+        ~ "== Optional local smoke test\n\n"
+        ~ "[source,bash]\n----\neasy-installer build . --plugin=" ~ p.plugin ~ "\n----\n\n"
+        ~ "== Related\n\n"
+        ~ "* https://github.com/dev-centr/easy-installer\n"
+        ~ "* https://github.com/dev-centr/msi-generator\n";
+}

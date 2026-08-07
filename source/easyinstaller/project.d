@@ -153,16 +153,35 @@ void saveProject(const ref InstallerProject p)
     write(projectFilePath(dir), toKdl(p));
 }
 
-string createNewProject(string dir, string plugin)
+string createNewProject(string dir, string plugin, string intent = "package", string runner = "github-actions")
 {
     auto p = defaultProject(dir, plugin);
     saveProject(p);
     auto readme = buildPath(dir, "INSTALLER.adoc");
     if (!exists(readme))
     {
-        write(readme, "= Installer project\n\n"
-            ~ "Edit `installer.kdl`, then run:\n\n"
-            ~ "[source,bash]\n----\neasy-installer build .\n----\n");
+        if (intent == "ci-pipeline")
+        {
+            write(readme, "= Installer project (CI pipeline)\n\n"
+                ~ "This scaffold is meant for CI. Edit `installer.kdl` and `ci-runner.sdl`, then:\n\n"
+                ~ "[source,bash]\n----\neasy-installer emit-ci .\n----\n\n"
+                ~ "Local package build is optional:\n\n"
+                ~ "[source,bash]\n----\neasy-installer build .\n----\n");
+        }
+        else
+        {
+            write(readme, "= Installer project\n\n"
+                ~ "Edit `installer.kdl`, then run:\n\n"
+                ~ "[source,bash]\n----\neasy-installer build .\n----\n");
+        }
+    }
+    if (intent == "ci-pipeline")
+    {
+        import easyinstaller.ci_profile : defaultCiProfile, saveCiProfile;
+        import easyinstaller.ci_emit : emitCi;
+        auto ci = defaultCiProfile(dir, runner, plugin);
+        saveCiProfile(ci);
+        emitCi(dir, ci);
     }
     return projectFilePath(dir);
 }
