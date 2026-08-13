@@ -18,6 +18,9 @@
 !.github/**
 !scripts/
 !scripts/**
+!playbooks/
+!playbooks/**
+playbooks/*.cmk.runs/
 !assets/
 !assets/**
 !packaging/

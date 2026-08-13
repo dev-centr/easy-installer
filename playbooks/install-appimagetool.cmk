@@ -1,0 +1,32 @@
+---
+title "Install appimagetool"
+---
+
+= Install appimagetool
+
+Fetches the continuous `appimagetool-x86_64.AppImage` into `~/.local/bin`. Linux only. Reusable from Scriptbook or `ibex plugins install-tool appimage`.
+
+::: playbook [id="install-appimagetool" shell="bash"]
+::: step [id="fetch" confirm=true]
+```
+if [ "$(uname -s)" != "Linux" ]; then
+  echo "appimagetool install playbook is Linux-only." >&2
+  exit 1
+fi
+mkdir -p "$HOME/.local/bin"
+url="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage"
+dest="$HOME/.local/bin/appimagetool"
+if command -v curl >/dev/null 2>&1; then
+  curl -fsSL -o "$dest" "$url"
+elif command -v wget >/dev/null 2>&1; then
+  wget -O "$dest" "$url"
+else
+  echo "Need curl or wget." >&2
+  exit 1
+fi
+chmod +x "$dest"
+echo "Installed $dest"
+echo "Ensure ~/.local/bin is on PATH."
+```
+:::
+:::

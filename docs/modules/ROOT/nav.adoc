@@ -3,5 +3,6 @@
 * xref:howto-projects.adoc[How-to: installer projects]
 * xref:howto-emit-ci.adoc[How-to: emit CI pipelines]
 * xref:plugins.adoc[Plugins]
+* xref:howto-plugin-tools.adoc[How-to: plugin tools]
 * xref:plugin-abi.adoc[Plugin ABI]
 * xref:shell-integration.adoc[Shell integration]

@@ -1,0 +1,72 @@
+= How-to: plugin tools and designers
+:description: Describe extras, install third-party builders with Scriptbook, and open their GUIs on emitted sources.
+:navtitle: Plugin tools
+
+Ibex owns the common `installer.kdl` spec. Each plugin owns type-specific extras and (optionally) a third-party compiler or designer. Ibex does **not** fill Inno/NSIS form fields; it emits a script or spec and opens that file.
+
+== Status
+
+[source,bash]
+----
+ibex plugins list
+ibex plugins info inno
+ibex plugins describe inno
+----
+
+`describe` prints JSON: id, targets, tool path, GUI path/URL, install playbook, and `extrasSchema`.
+
+== Type-specific extras
+
+Put overlay fields under `extras` in `installer.kdl`. Unknown keys are ignored by other plugins.
+
+[source,kdl]
+----
+installer {
+    name "MyApp"
+    plugin "inno"
+    extras {
+        compression "lzma"
+        solid true
+        outputBaseFilename "MyApp-setup"
+    }
+    files {
+        file "*"
+    }
+}
+----
+
+Then `ibex emit .` or `ibex build .` applies them in the generated `.iss` / `.nsi` / MSI spec / AppDir.
+
+== Install builders (Scriptbook)
+
+Third-party tools are installed by reusable CentrMark playbooks under `playbooks/`, executed by link:https://github.com/dev-centr/scriptbook[Scriptbook]:
+
+[source,bash]
+----
+# Chicken-and-egg: does not need Scriptbook yet
+ibex plugins install-scriptbook
+
+ibex plugins install-tool inno
+ibex plugins install-tool nsis
+ibex plugins install-tool msi
+ibex plugins install-tool appimage --dry-run
+----
+
+If Scriptbook is missing, `install-tool` runs `scripts/install-scriptbook.ps1` (Windows) or `scripts/install-scriptbook.sh` first. Other apps can run those scripts and the same `.cmk` files with the `scriptbook` CLI.
+
+`ibex plugins install-gui <id>` still only opens the vendor download page.
+
+== Open a designer
+
+[source,bash]
+----
+ibex plugins open-gui inno .
+----
+
+This emits sources into `dist/` and launches Compil32 / NSIS / the default app on that file. Further edits in the third-party IDE are not round-tripped into `installer.kdl`; keep extras in KDL for shared fields and treat the emitted script as an overlay.
+
+== Related
+
+* xref:plugins.adoc[Plugins]
+* xref:plugin-abi.adoc[Plugin ABI]
+* xref:howto-projects.adoc[Installer projects]

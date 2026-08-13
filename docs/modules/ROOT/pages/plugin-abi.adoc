@@ -4,13 +4,49 @@
 
 Built-in plugins live under `plugins/*.d` and register at load time.
 
+The host contract is **one project model + plugin operations**. Each plugin maps `installer.kdl` (plus `extras {}`) into its format and may shell out to a compiler. There is no shared package engine that speaks every format.
+
+== Host operations
+
+[cols="1,2"]
+|===
+| Method | Role
+
+| `emitSources`
+| Write `.iss` / `.nsi` / spec / AppDir under `dist/`
+
+| `build`
+| Emit, then invoke `ISCC` / `makensis` / `msi-generator` / `appimagetool` / zip
+
+| `extrasSchema`
+| Advertise type-specific fields for a unified UI
+
+| `installPlaybook`
+| Filename under `playbooks/` for Scriptbook
+
+| `detectGui` / `designerSource`
+| File handoff into a third-party IDE
+|===
+
+CLI mirrors this: `ibex emit`, `ibex build`, `ibex plugins describe`, `ibex plugins install-tool`, `ibex plugins open-gui`.
+
 == Subprocess protocol (sketch)
 
-Place `ibex-plugin-<id>` on PATH (legacy `easy-installer-plugin-<id>` may be accepted later). Future host revisions will call:
+Place `ibex-plugin-<id>` on PATH (legacy `easy-installer-plugin-<id>` may be accepted later). Host revisions call:
 
-* `--describe` → metadata (id, displayName, targets, guiUrl)
+* `--describe` → JSON (id, displayName, targets, tool, gui, installPlaybook, extrasSchema)
 * `--build --project=<dir> --out=<dir>`
 * `--emit --project=<dir> --out=<dir>`
+* `--install-tool [--dry-run]`
+* `--open-gui --project=<dir> --out=<dir>`
+
+== Designer handoff
+
+Open-gui emits sources, then launches the vendor GUI **on that file**. Inno/NSIS wizards have no product-spec injection API. After a designer edit, the emitted script is the overlay; common fields stay in `installer.kdl`.
+
+== Scriptbook
+
+Ibex does not vendor a second tool installer. `scripts/install-scriptbook.*` bootstraps the Scriptbook CLI; playbooks under `playbooks/` are ordinary `.cmk` documents other apps can run.
 
 == msi-generator dual role
 

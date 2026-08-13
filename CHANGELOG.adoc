@@ -1,5 +1,13 @@
 = Changelog
 
+== 2026-08-13 — Plugin extras, Scriptbook tool install, designer handoff
+
+* `installer.kdl` `extras { }` for type-specific overlay fields; `ibex plugins describe` prints JSON schema
+* `ibex plugins install-tool` runs reusable Scriptbook playbooks (`playbooks/*.cmk`); `install-scriptbook` bootstraps the CLI
+* `ibex plugins open-gui` emits sources and opens the third-party designer on that file (not form injection)
+* `ibex emit` writes plugin sources without compiling
+* Docs: xref:howto-plugin-tools.adoc[How-to: plugin tools]
+
 == 2026-08-06 — v0.2.0 Ibex rebrand
 
 * Product rename: **Ibex** (Install Builder EXtension); CLI `ibex`

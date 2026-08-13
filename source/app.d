@@ -5,6 +5,7 @@ import easyinstaller.project;
 import easyinstaller.ci_profile;
 import easyinstaller.ci_emit;
 import easyinstaller.shell_hooks;
+import easyinstaller.scriptbook_host;
 import easyinstaller.versioninfo;
 import std.file : mkdirRecurse, exists;
 import std.path : buildPath, absolutePath;
@@ -49,6 +50,8 @@ int main(string[] args)
             return cmdEmitCi(args[2 .. $]);
         case "build":
             return cmdBuild(args[2 .. $]);
+        case "emit":
+            return cmdEmit(args[2 .. $]);
         case "plugins":
             return cmdPlugins(args[2 .. $]);
         case "shell":
@@ -78,13 +81,19 @@ Usage:
   ibex new-project <dir> [--plugin=<id>] [--intent=package|ci-pipeline] [--runner=<id>]
   ibex emit-ci [dir] [--runner=<id>] [--plugin=<id>]
   ibex build <dir> [--plugin=<id>]
-  ibex plugins list|info <id>|install-gui <id>
+  ibex emit <dir> [--plugin=<id>]
+  ibex plugins list|info <id>|describe <id>
+  ibex plugins install-tool <id> [--dry-run]
+  ibex plugins open-gui <id> [dir]
+  ibex plugins install-gui <id>
   ibex shell install|uninstall
   ibex --version
   ibex debug-dump [file]
 
 CI runners: github-actions, gitlab-ci, azure-pipelines, jenkins, circleci, bitbucket-pipelines
 emit-ci writes workflow files + CI-INSTALLER.adoc only (no package build).
+install-tool runs a Scriptbook playbook (bootstraps Scriptbook if needed).
+open-gui emits sources and opens the third-party designer on that file.
 `);
     return 0;
 }
@@ -213,6 +222,32 @@ int cmdBuild(string[] args)
     return 0;
 }
 
+int cmdEmit(string[] args)
+{
+    if (!args.length)
+    {
+        stderr.writeln("project directory required");
+        return 1;
+    }
+    auto project = loadProject(args[0]);
+    foreach (a; args[1 .. $])
+    {
+        if (a.length > 9 && a[0 .. 9] == "--plugin=")
+            project.plugin = a[9 .. $];
+    }
+    auto plug = findPlugin(project.plugin);
+    if (plug is null)
+    {
+        stderr.writeln("unknown plugin: ", project.plugin);
+        return 1;
+    }
+    auto outDir = buildPath(project.rootDir, "dist");
+    if (!exists(outDir))
+        mkdirRecurse(outDir);
+    writeln(plug.emitSources(project, outDir));
+    return 0;
+}
+
 int cmdPlugins(string[] args)
 {
     if (!args.length || args[0].toLower == "list")
@@ -222,11 +257,17 @@ int cmdPlugins(string[] args)
             auto tool = p.detectTool();
             writeln(p.id, "\t", p.displayName(), "\t",
                 tool.length ? "tool=" ~ tool : "tool=missing",
-                p.guiName.length ? "\tgui=" ~ p.guiName : "");
+                p.guiName.length ? "\tgui=" ~ p.guiName : "",
+                p.installPlaybook.length ? "\tplaybook=" ~ p.installPlaybook : "");
         }
         return 0;
     }
     auto sub = args[0].toLower;
+    if (sub == "install-scriptbook")
+    {
+        writeln(installScriptbook());
+        return findScriptbook().length ? 0 : 1;
+    }
     if (args.length < 2)
     {
         stderr.writeln("plugin id required");
@@ -247,9 +288,39 @@ int cmdPlugins(string[] args)
         writeln("canBuild: ", p.canBuild);
         writeln("tool: ", p.detectTool.length ? p.detectTool : "(none)");
         writeln("gui: ", g.name.length ? g.name : "(none)");
+        writeln("guiPath: ", g.guiPath.length ? g.guiPath : "(none)");
         writeln("guiUrl: ", g.url);
-        writeln("guiInstalled: ", g.installed);
+        writeln("guiInstalled: ", g.guiInstalled);
         writeln("hint: ", g.detectDetail);
+        writeln("installPlaybook: ", p.installPlaybook.length ? p.installPlaybook : "(none)");
+        foreach (f; p.extrasSchema)
+            writeln("extra: ", f.key, " (", f.type, ", default=", f.defaultValue, ") ", f.description);
+        return 0;
+    }
+    if (sub == "describe")
+    {
+        writeln(describeJson(p));
+        return 0;
+    }
+    if (sub == "install-tool")
+    {
+        bool dryRun;
+        foreach (a; args[2 .. $])
+            if (a == "--dry-run")
+                dryRun = true;
+        auto run = runInstallPlaybook(p, dryRun);
+        writeln(run.summary);
+        return run.status == 0 ? 0 : 1;
+    }
+    if (sub == "open-gui")
+    {
+        string dir = args.length >= 3 && !args[2].startsWith("--") ? args[2] : ".";
+        auto project = loadProject(absolutePath(dir));
+        project.plugin = p.id;
+        auto outDir = buildPath(project.rootDir, "dist");
+        if (!exists(outDir))
+            mkdirRecurse(outDir);
+        writeln(openDesigner(p, project, outDir));
         return 0;
     }
     if (sub == "install-gui")

@@ -27,10 +27,18 @@
 | link:https://github.com/AppImage/appimagetool[appimagetool]
 |===
 
-Discover and open installer GUIs:
+Discover, install, and open installer GUIs:
 
 [source,bash]
 ----
 ibex plugins info inno
+ibex plugins describe inno
+ibex plugins install-scriptbook
+ibex plugins install-tool inno
+ibex plugins open-gui inno .
 ibex plugins install-gui inno
 ----
+
+`install-tool` runs the plugin's Scriptbook playbook. `open-gui` emits sources and opens the designer on that file. `install-gui` only opens the vendor download page.
+
+Type-specific fields live in `installer.kdl` `extras { }` — see xref:howto-plugin-tools.adoc[How-to: plugin tools].

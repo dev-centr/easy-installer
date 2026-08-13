@@ -1,0 +1,23 @@
+---
+title "Install NSIS"
+---
+
+= Install NSIS
+
+Puts `makensis` on PATH via winget (`NSIS.NSIS`). Windows only. Reusable from Scriptbook or `ibex plugins install-tool nsis`.
+
+::: playbook [id="install-nsis" shell="pwsh"]
+::: step [id="winget" confirm=true]
+```
+if ($env:OS -notmatch 'Windows') {
+  Write-Error 'NSIS is Windows-only.'
+  exit 1
+}
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+  Write-Error 'winget not found. Install NSIS from https://nsis.sourceforge.io/Download'
+  exit 1
+}
+winget install --id NSIS.NSIS -e --accept-package-agreements --accept-source-agreements
+```
+:::
+:::

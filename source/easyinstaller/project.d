@@ -1,11 +1,11 @@
 module easyinstaller.project;
 
-import std.algorithm : canFind, filter, map;
+import std.algorithm : canFind, filter, map, sort;
 import std.array : array, join, split;
 import std.conv : to;
 import std.file : exists, mkdirRecurse, readText, write;
 import std.path : absolutePath, baseName, buildPath, dirName;
-import std.string : strip, splitLines, startsWith, indexOf, replace;
+import std.string : strip, splitLines, startsWith, indexOf, replace, toLower;
 
 /// Installer project model (serialized as installer.kdl).
 struct InstallerProject
@@ -19,7 +19,29 @@ struct InstallerProject
     string[] files; /// relative or absolute paths to include
     string exe; /// primary executable (optional)
     bool addToPath; /// ask installer to add install dir to PATH
+    string[string] extras; /// plugin-owned overlay (installer.kdl extras {})
     string rootDir; /// directory containing installer.kdl
+}
+
+string extra(const ref InstallerProject p, string key, string fallback = "")
+{
+    auto e = key in p.extras;
+    if (e is null || !(*e).length)
+        return fallback;
+    return *e;
+}
+
+bool extraFlag(const ref InstallerProject p, string key, bool fallback = false)
+{
+    auto s = extra(p, key, "");
+    if (!s.length)
+        return fallback;
+    auto l = s.toLower;
+    if (l == "true" || l == "yes" || l == "1")
+        return true;
+    if (l == "false" || l == "no" || l == "0")
+        return false;
+    return fallback;
 }
 
 string projectFilePath(string dir)
@@ -56,6 +78,13 @@ string toKdl(const ref InstallerProject p)
     if (p.exe.length)
         lines ~= `    exe "` ~ esc(p.exe) ~ `"`;
     lines ~= `    add-to-path ` ~ (p.addToPath ? "true" : "false");
+    if (p.extras.length)
+    {
+        lines ~= `    extras {`;
+        foreach (k; p.extras.keys.sort)
+            lines ~= `        ` ~ k ~ ` "` ~ esc(p.extras[k]) ~ `"`;
+        lines ~= `    }`;
+    }
     lines ~= `    files {`;
     foreach (f; p.files)
         lines ~= `        file "` ~ esc(f) ~ `"`;
@@ -68,12 +97,18 @@ string toKdl(const ref InstallerProject p)
 InstallerProject parseKdl(string text, string rootDir)
 {
     InstallerProject p = defaultProject(rootDir);
+    p.files = [];
     string section;
     foreach (raw; text.splitLines)
     {
         auto line = raw.strip;
         if (!line.length || line.startsWith("//") || line.startsWith("#"))
             continue;
+        if (line.canFind("extras {") || line == "extras {")
+        {
+            section = "extras";
+            continue;
+        }
         if (line.canFind("files {") || line == "files {")
         {
             section = "files";
@@ -81,8 +116,20 @@ InstallerProject parseKdl(string text, string rootDir)
         }
         if (line == "}" || line == "};")
         {
-            if (section == "files")
+            if (section.length)
                 section = "";
+            continue;
+        }
+        if (section == "extras")
+        {
+            auto sp = line.indexOf(' ');
+            if (sp > 0)
+            {
+                auto key = line[0 .. sp].strip;
+                auto val = extractQuoted(line);
+                if (key.length)
+                    p.extras[key] = val;
+            }
             continue;
         }
         if (section == "files")
@@ -184,4 +231,28 @@ string createNewProject(string dir, string plugin, string intent = "package", st
         emitCi(dir, ci);
     }
     return projectFilePath(dir);
+}
+
+unittest
+{
+    auto kdl = `installer {
+  name "Demo"
+  plugin "inno"
+  extras {
+    compression "zip"
+    solid false
+  }
+  files {
+    file "bin/app.exe"
+  }
+}`;
+    auto p = parseKdl(kdl, ".");
+    assert(p.name == "Demo");
+    assert(p.plugin == "inno");
+    assert(p.extras["compression"] == "zip");
+    assert(p.extras["solid"] == "false");
+    assert(!extraFlag(p, "solid", true));
+    assert(p.files == ["bin/app.exe"]);
+    auto round = parseKdl(toKdl(p), ".");
+    assert(round.extras["compression"] == "zip");
 }

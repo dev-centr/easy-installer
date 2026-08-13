@@ -1,0 +1,45 @@
+---
+title "Install msi-generator"
+---
+
+= Install msi-generator
+
+Downloads the latest `dev-centr/msi-generator` release asset into the Ibex bin directory. Reusable from Scriptbook or `ibex plugins install-tool msi`.
+
+::: playbook [id="install-msi-generator" shell="pwsh"]
+::: step [id="release" confirm=true]
+```
+$win = ($env:OS -match 'Windows')
+if ($win) {
+  $dest = Join-Path $env:LOCALAPPDATA 'ibex\bin'
+  $asset = 'msi-generator-windows-amd64.exe'
+  $binName = 'msi-generator.exe'
+} elseif ($IsMacOS) {
+  $dest = Join-Path $HOME '.config/ibex/bin'
+  $asset = 'msi-generator-macos-amd64'
+  $binName = 'msi-generator'
+} else {
+  $dest = Join-Path $HOME '.config/ibex/bin'
+  $asset = 'msi-generator-linux-amd64'
+  $binName = 'msi-generator'
+}
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+  Write-Error 'gh not found. Install GitHub CLI or download msi-generator from https://github.com/dev-centr/msi-generator/releases'
+  exit 1
+}
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('msi-generator-' + [guid]::NewGuid().ToString())
+New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+Push-Location $tmp
+try {
+  gh release download -R dev-centr/msi-generator -p $asset --clobber
+  Copy-Item -Force $asset (Join-Path $dest $binName)
+} finally {
+  Pop-Location
+  Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+}
+Write-Output "Installed $(Join-Path $dest $binName)"
+Write-Output "Add to PATH: ibex inplace-path add `"$dest`""
+```
+:::
+:::

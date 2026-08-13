@@ -1,7 +1,7 @@
 module easyinstaller.plugins.msi_msix;
 
 import easyinstaller.plugin;
-import easyinstaller.project : InstallerProject;
+import easyinstaller.project : InstallerProject, extra;
 import std.file : exists, mkdirRecurse, write;
 import std.path : buildPath, baseName, dirName;
 import std.process : executeShell, environment;
@@ -46,6 +46,19 @@ abstract class MsiGeneratorBackedPlugin : InstallerPlugin
     string guiName() { return "msi-generator (CLI engine)"; }
     string guiInstallUrl() { return "https://github.com/dev-centr/msi-generator/releases"; }
     string guiDetectHint() { return "Put msi-generator on PATH or set MSI_GENERATOR"; }
+    string detectGui() { return ""; }
+    string installPlaybook() { return "install-msi-generator.cmk"; }
+    ExtraField[] extrasSchema()
+    {
+        return [
+            ExtraField("productCode", "string", "00000000-0000-0000-0000-000000000001", "MSI ProductCode GUID"),
+            ExtraField("upgradeCode", "string", "00000000-0000-0000-0000-000000000002", "MSI UpgradeCode GUID"),
+        ];
+    }
+    string designerSource(const ref InstallerProject project, string outDir)
+    {
+        return buildPath(outDir, project.name ~ "-" ~ packageType() ~ "-spec.json");
+    }
 
     string emitSources(const ref InstallerProject project, string outDir)
     {
@@ -54,12 +67,14 @@ abstract class MsiGeneratorBackedPlugin : InstallerPlugin
         // Write a minimal JSON spec for msi-generator --spec
         auto specPath = buildPath(outDir, project.name ~ "-" ~ packageType() ~ "-spec.json");
         auto exe = project.exe.length ? project.exe : "";
+        auto productCode = extra(project, "productCode", "00000000-0000-0000-0000-000000000001");
+        auto upgradeCode = extra(project, "upgradeCode", "00000000-0000-0000-0000-000000000002");
         auto json = `{
   "name": "` ~ project.name ~ `",
   "manufacturer": "` ~ project.publisher ~ `",
   "productVersion": "` ~ normalizeFourPart(project.version_) ~ `",
-  "productCode": "00000000-0000-0000-0000-000000000001",
-  "upgradeCode": "00000000-0000-0000-0000-000000000002",
+  "productCode": "` ~ productCode ~ `",
+  "upgradeCode": "` ~ upgradeCode ~ `",
   "rootFolder": "INSTALLDIR",
   "components": [
     {

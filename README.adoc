@@ -119,6 +119,10 @@ ibex new-project . --plugin=portable-zip
 # Build with the selected plugin
 ibex build .
 
+# Install a backend compiler (Scriptbook playbook) and open its designer
+ibex plugins install-tool inno
+ibex plugins open-gui inno .
+
 # Or emit CI workflows only
 ibex emit-ci . --runner=github-actions
 ----
@@ -143,7 +147,9 @@ endif::[]
 == Related
 
 * link:docs/modules/ROOT/pages/howto-emit-ci.adoc[Emit CI pipelines]
+* link:docs/modules/ROOT/pages/howto-plugin-tools.adoc[Plugin tools and designers]
 * https://github.com/dev-centr/msi-generator[msi-generator]
+* https://github.com/dev-centr/scriptbook[Scriptbook]
 
 == License
 

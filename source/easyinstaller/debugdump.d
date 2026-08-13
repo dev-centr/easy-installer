@@ -2,6 +2,7 @@ module easyinstaller.debugdump;
 
 import easyinstaller.paths : configRoot, ledgerPath;
 import easyinstaller.plugin : allPlugins;
+import easyinstaller.scriptbook_host : findScriptbook, playbooksDir;
 import easyinstaller.versioninfo : aboutLine;
 import std.array : appender;
 import std.conv : to;
@@ -24,6 +25,12 @@ string buildDebugDump()
     app.put("\nledger: ");
     app.put(ledgerPath());
     app.put(exists(ledgerPath()) ? " (present)\n" : " (missing)\n");
+    auto sb = findScriptbook();
+    app.put("scriptbook: ");
+    app.put(sb.length ? sb : "(missing)");
+    app.put("\nplaybooksDir: ");
+    app.put(playbooksDir());
+    app.put(exists(playbooksDir()) ? " (present)\n" : " (missing)\n");
     app.put("plugins:\n");
     foreach (p; allPlugins())
     {

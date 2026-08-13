@@ -18,6 +18,13 @@ final class PortableZipPlugin : InstallerPlugin
     string guiName() { return ""; }
     string guiInstallUrl() { return ""; }
     string guiDetectHint() { return ""; }
+    string detectGui() { return ""; }
+    string installPlaybook() { return ""; }
+    ExtraField[] extrasSchema() { return noExtras(); }
+    string designerSource(const ref InstallerProject project, string outDir)
+    {
+        return "";
+    }
 
     string emitSources(const ref InstallerProject project, string outDir)
     {

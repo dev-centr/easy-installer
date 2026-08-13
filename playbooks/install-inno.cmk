@@ -1,0 +1,23 @@
+---
+title "Install Inno Setup"
+---
+
+= Install Inno Setup
+
+Puts `ISCC` / Compil32 on PATH via winget (`JRSoftware.InnoSetup`). Windows only. Reusable from Scriptbook or `ibex plugins install-tool inno`.
+
+::: playbook [id="install-inno" shell="pwsh"]
+::: step [id="winget" confirm=true]
+```
+if ($env:OS -notmatch 'Windows') {
+  Write-Error 'Inno Setup is Windows-only.'
+  exit 1
+}
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+  Write-Error 'winget not found. Install Inno Setup from https://jrsoftware.org/isdl.php'
+  exit 1
+}
+winget install --id JRSoftware.InnoSetup -e --accept-package-agreements --accept-source-agreements
+```
+:::
+:::

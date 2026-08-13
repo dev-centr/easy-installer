@@ -27,7 +27,8 @@ ibex new-project . --plugin=portable-zip
 ibex build .
 ibex emit-ci . --runner=github-actions
 ibex plugins list
-ibex plugins install-gui inno
+ibex plugins install-tool inno
+ibex plugins open-gui inno .
 ----
 
 == Related

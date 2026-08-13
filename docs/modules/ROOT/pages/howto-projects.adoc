@@ -13,7 +13,7 @@ This writes `installer.kdl` and a short `INSTALLER.adoc`.
 
 == Edit
 
-Set `name`, `version`, `id`, `publisher`, `plugin`, optional `exe`, `add-to-path`, and `files`.
+Set `name`, `version`, `id`, `publisher`, `plugin`, optional `exe`, `add-to-path`, `files`, and plugin-owned `extras { }` (see xref:howto-plugin-tools.adoc[plugin tools]).
 
 == Build
 
@@ -24,7 +24,13 @@ ibex build .
 ibex build . --plugin=nsis
 ----
 
-Artifacts land under `dist/`.
+Artifacts land under `dist/`. Emit scripts/specs without compiling:
+
+[source,bash]
+----
+ibex emit .
+ibex plugins open-gui inno .
+----
 
 == CI without a local package build
 
